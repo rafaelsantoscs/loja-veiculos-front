@@ -1,0 +1,191 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes pulse-scale {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.animate-pulse-scale {
+  animation: pulse-scale 1.5s ease-in-out infinite;
+}
+
+@keyframes modal-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+.animate-modal-enter {
+  animation: modal-enter 0.3s ease-out;
+}
+
+@keyframes backdrop-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-backdrop-enter {
+  animation: backdrop-enter 0.2s ease-out;
+}
+
+body {
+  font-family: Roboto, sans-serif;
+  box-sizing: border-box;
+
+}
+
+/* ==================== React Select Custom Style ==================== */
+.react-select__control {
+  @apply w-full p-2.5 border border-slate-300 rounded-lg bg-slate-50 text-sm shadow-none min-h-[2.5rem];
+}
+
+.react-select__control--is-focused {
+  @apply border-camutanga-azul ring-1 ring-camutanga-azul;
+}
+
+.react-select__value-container {
+  @apply text-sm text-slate-800;
+}
+
+.react-select__single-value {
+  @apply text-slate-800;
+}
+
+.react-select__menu {
+  @apply mt-1 rounded-lg border border-slate-300 bg-white z-50 text-sm;
+}
+
+.react-select__option {
+  @apply px-3 py-2 cursor-pointer text-slate-800;
+}
+
+.react-select__option--is-focused {
+  @apply bg-camutanga-azul text-white;
+}
+
+.react-select__placeholder {
+  @apply text-slate-400;
+}
+
+.react-select__indicator-separator {
+  @apply hidden;
+}
+
+.react-select__input-container {
+  @apply text-slate-800;
+}
+
+/* ====== Dark mode ajustes extras ====== */
+:root.dark .react-select__control {
+  @apply bg-slate-700 border-slate-600 text-white;
+}
+
+:root.dark .react-select__value-container {
+  @apply text-white;
+}
+
+:root.dark .react-select__single-value {
+  @apply text-white;
+}
+
+:root.dark .react-select__menu {
+  @apply bg-slate-700 border-slate-600 text-white;
+}
+
+:root.dark .react-select__option {
+  @apply text-white;
+}
+
+:root.dark .react-select__input-container {
+  @apply text-white;
+}
+
+:root.dark .react-select__placeholder {
+  @apply text-slate-400;
+}
+
+.image-fade-mask {
+  -webkit-mask-image: radial-gradient(circle, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%);
+  mask-image: radial-gradient(circle, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%);
+}
+
+
+/* card de veiculos com imagns */
+
+.clip-car {
+  clip-path: path('M20,60 Q30,35 70,35 L130,35 Q170,35 180,60 L180,70 Q175,80 170,80 L140,80 L140,85 L60,85 L60,80 L30,80 Q25,80 20,75 Z');
+}
+.clip-moto {
+  clip-path: path('M40,70 Q60,30 90,60 L110,60 Q140,30 160,70 L150,75 Q140,80 130,80 L70,80 Q60,80 50,75 Z');
+}
+.clip-caminhao {
+  clip-path: path('M10,60 L30,60 L30,40 L120,40 L120,60 L180,60 L180,75 Q175,80 170,80 L150,80 L150,70 L30,70 L30,80 L10,80 Q5,80 5,75 Z');
+}
+.clip-onibus {
+  clip-path: path('M10,50 L20,40 L180,40 L190,50 L190,75 Q185,80 180,80 L20,80 Q15,80 10,75 Z');
+}
+.clip-ambulancia {
+  clip-path: path('M20,60 Q30,40 80,40 L120,40 Q170,40 180,60 L180,70 Q175,80 170,80 L30,80 Q25,80 20,75 Z');
+}
+
+@layer utilities {
+  .text-shadow-sm {
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  }
+  
+  .text-shadow-none {
+    text-shadow: none;
+  }
+}
+
+.glass-effect {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dark .glass-effect {
+  background: rgba(30, 41, 59, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.gradient-border {
+  background: linear-gradient(135deg, #ec4899, #8b5cf6, #06b6d4);
+  padding: 2px;
+  border-radius: 1rem;
+}
+
+.gradient-border-inner {
+  background: white;
+  border-radius: calc(1rem - 2px);
+}
+
+.dark .gradient-border-inner {
+  background: rgb(30 41 59);
+}
+
+.floating-button {
+  box-shadow: 0 10px 25px -5px rgba(236, 72, 153, 0.3);
+  transform: translateY(0);
+  transition: all 0.2s ease;
+}
+
+.floating-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 35px -5px rgba(236, 72, 153, 0.4);
+}
+
+
+
+
+

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Veículo Ativo</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .debug-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .result { background: #f5f5f5; padding: 10px; margin: 10px 0; font-family: monospace; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Debug Veículo Ativo - Sistema Offline</h1>
+        
+        <div class="debug-section">
+            <h3>1. Verificar Estado do localStorage</h3>
+            <button onclick="verificarLocalStorage()">Verificar localStorage</button>
+            <div id="localStorage-result" class="result"></div>
+        </div>
+
+        <div class="debug-section">
+            <h3>2. Testar Salvamento de Dados</h3>
+            <button onclick="salvarDadosTeste()">Salvar Dados de Teste</button>
+            <div id="salvar-result" class="result"></div>
+        </div>
+
+        <div class="debug-section">
+            <h3>3. Testar Recuperação de Dados</h3>
+            <button onclick="recuperarDados()">Recuperar Dados</button>
+            <div id="recuperar-result" class="result"></div>
+        </div>
+
+        <div class="debug-section">
+            <h3>4. Limpar Dados</h3>
+            <button onclick="limparDados()">Limpar Dados</button>
+            <div id="limpar-result" class="result"></div>
+        </div>
+
+        <div class="debug-section">
+            <h3>5. Teste Completo</h3>
+            <button onclick="testeCompleto()">Executar Teste Completo</button>
+            <div id="teste-completo-result" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        // Simular o veiculoAtivoService
+        const veiculoAtivoService = {
+            salvarVeiculoAtivo: (dados) => {
+                const timestamp = new Date().getTime();
+                const dadosParaSalvar = {
+                    ...dados,
+                    timestamp
+                };
+                
+                localStorage.setItem('veiculo_ativo_offline', JSON.stringify(dadosParaSalvar));
+                console.log('Dados salvos:', dadosParaSalvar);
+                return dadosParaSalvar;
+            },
+
+            obterVeiculoAtivo: () => {
+                const dados = localStorage.getItem('veiculo_ativo_offline');
+                if (!dados) {
+                    console.log('Nenhum dado encontrado no localStorage');
+                    return null;
+                }
+
+                const dadosParsed = JSON.parse(dados);
+                
+                // Verificar se não expirou (24 horas)
+                const agora = new Date().getTime();
+                const tempoExpiracao = 24 * 60 * 60 * 1000; // 24 horas
+                
+                if (agora - dadosParsed.timestamp > tempoExpiracao) {
+                    console.log('Dados expirados, removendo...');
+                    localStorage.removeItem('veiculo_ativo_offline');
+                    return null;
+                }
+
+                console.log('Dados recuperados:', dadosParsed);
+                return dadosParsed;
+            },
+
+            limparVeiculoAtivo: () => {
+                localStorage.removeItem('veiculo_ativo_offline');
+                console.log('Dados limpos do localStorage');
+            }
+        };
+
+        function verificarLocalStorage() {
+            const result = document.getElementById('localStorage-result');
+            let html = '<h4>Estado do localStorage:</h4>';
+            
+            // Verificar se localStorage está disponível
+            try {
+                localStorage.setItem('teste', 'valor');
+                localStorage.removeItem('teste');
+                html += '<div class="success">✓ localStorage está funcionando</div>';
+            } catch (e) {
+                html += '<div class="error">✗ Erro no localStorage: ' + e.message + '</div>';
+                result.innerHTML = html;
+                return;
+            }
+
+            // Listar todas as chaves
+            html += '<h5>Chaves no localStorage:</h5>';
+            if (localStorage.length === 0) {
+                html += '<div>Nenhuma chave encontrada</div>';
+            } else {
+                for (let i = 0; i < localStorage.length; i++) {
+                    const chave = localStorage.key(i);
+                    const valor = localStorage.getItem(chave);
+                    html += `<div><strong>${chave}:</strong> ${valor.length > 100 ? valor.substring(0, 100) + '...' : valor}</div>`;
+                }
+            }
+
+            // Verificar especificamente nossa chave
+            const dadosVeiculo = localStorage.getItem('veiculo_ativo_offline');
+            if (dadosVeiculo) {
+                html += '<h5>Dados do veículo encontrados:</h5>';
+                html += `<pre>${JSON.stringify(JSON.parse(dadosVeiculo), null, 2)}</pre>`;
+            } else {
+                html += '<h5>Dados do veículo:</h5>';
+                html += '<div class="error">Nenhum dado de veículo encontrado</div>';
+            }
+
+            result.innerHTML = html;
+        }
+
+        function salvarDadosTeste() {
+            const result = document.getElementById('salvar-result');
+            
+            const dadosTeste = {
+                veiculoId: 123,
+                placa: 'ABC-1234',
+                odometroInicial: 100000,
+                motoristaId: 456,
+                motoristaNome: 'João Silva'
+            };
+
+            try {
+                const dadosSalvos = veiculoAtivoService.salvarVeiculoAtivo(dadosTeste);
+                result.innerHTML = `
+                    <div class="success">✓ Dados salvos com sucesso!</div>
+                    <pre>${JSON.stringify(dadosSalvos, null, 2)}</pre>
+                `;
+            } catch (e) {
+                result.innerHTML = `<div class="error">✗ Erro ao salvar: ${e.message}</div>`;
+            }
+        }
+
+        function recuperarDados() {
+            const result = document.getElementById('recuperar-result');
+            
+            try {
+                const dados = veiculoAtivoService.obterVeiculoAtivo();
+                if (dados) {
+                    result.innerHTML = `
+                        <div class="success">✓ Dados recuperados com sucesso!</div>
+                        <pre>${JSON.stringify(dados, null, 2)}</pre>
+                    `;
+                } else {
+                    result.innerHTML = `<div class="error">✗ Nenhum dado encontrado ou dados expirados</div>`;
+                }
+            } catch (e) {
+                result.innerHTML = `<div class="error">✗ Erro ao recuperar: ${e.message}</div>`;
+            }
+        }
+
+        function limparDados() {
+            const result = document.getElementById('limpar-result');
+            
+            try {
+                veiculoAtivoService.limparVeiculoAtivo();
+                result.innerHTML = `<div class="success">✓ Dados limpos com sucesso!</div>`;
+            } catch (e) {
+                result.innerHTML = `<div class="error">✗ Erro ao limpar: ${e.message}</div>`;
+            }
+        }
+
+        async function testeCompleto() {
+            const result = document.getElementById('teste-completo-result');
+            let html = '<h4>Executando teste completo:</h4>';
+            
+            // 1. Limpar dados existentes
+            html += '<div>1. Limpando dados existentes...</div>';
+            veiculoAtivoService.limparVeiculoAtivo();
+            
+            // 2. Verificar se está limpo
+            html += '<div>2. Verificando se dados foram limpos...</div>';
+            let dados = veiculoAtivoService.obterVeiculoAtivo();
+            if (dados === null) {
+                html += '<div class="success">✓ Dados limpos corretamente</div>';
+            } else {
+                html += '<div class="error">✗ Dados não foram limpos</div>';
+                result.innerHTML = html;
+                return;
+            }
+
+            // 3. Salvar dados de teste
+            html += '<div>3. Salvando dados de teste...</div>';
+            const dadosTeste = {
+                veiculoId: 999,
+                placa: 'TEST-123',
+                odometroInicial: 50000,
+                motoristaId: 777,
+                motoristaNome: 'Motorista Teste'
+            };
+            
+            const dadosSalvos = veiculoAtivoService.salvarVeiculoAtivo(dadosTeste);
+            if (dadosSalvos) {
+                html += '<div class="success">✓ Dados salvos corretamente</div>';
+            } else {
+                html += '<div class="error">✗ Erro ao salvar dados</div>';
+                result.innerHTML = html;
+                return;
+            }
+
+            // 4. Recuperar dados
+            html += '<div>4. Recuperando dados...</div>';
+            dados = veiculoAtivoService.obterVeiculoAtivo();
+            if (dados && dados.veiculoId === dadosTeste.veiculoId) {
+                html += '<div class="success">✓ Dados recuperados corretamente</div>';
+                html += `<pre>${JSON.stringify(dados, null, 2)}</pre>`;
+            } else {
+                html += '<div class="error">✗ Erro ao recuperar dados</div>';
+            }
+
+            // 5. Teste de persistência (simular reload)
+            html += '<div>5. Teste de persistência...</div>';
+            // Simular um "reload" obtendo dados novamente
+            const dadosAposReload = veiculoAtivoService.obterVeiculoAtivo();
+            if (dadosAposReload && dadosAposReload.veiculoId === dadosTeste.veiculoId) {
+                html += '<div class="success">✓ Dados persistem após simulação de reload</div>';
+            } else {
+                html += '<div class="error">✗ Dados não persistem após reload</div>';
+            }
+
+            html += '<div><strong>Teste completo finalizado!</strong></div>';
+            result.innerHTML = html;
+        }
+
+        // Executar verificação inicial quando a página carrega
+        window.onload = function() {
+            verificarLocalStorage();
+        };
+    </script>
+</body>
+</html>

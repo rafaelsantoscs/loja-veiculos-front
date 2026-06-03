@@ -1,0 +1,68 @@
+[
+  {
+    "id": 1,
+    "nome": "Vitor ",
+    "imagem": "/images/colaboradores/profile1.jpg",
+    "raridade": "raro",
+    "slides": [
+      {
+        "title": "Quem é Vitor Verçoza",
+        "description": "Responsável pelo suporte avançado do SAMU, com anos de experiência em emergências.",
+        "image": "/images/colaboradores/profile1.jpg"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "nome": "Marcone ",
+    "imagem": "/images/colaboradores/profile2.jpg",
+    "raridade": "lendario",
+    "slides": [
+      {
+        "title": "Quem é Marcone Santos",
+        "description": "Especialista em motolâncias e resgate rápido em áreas urbanas.",
+        "image": "/images/colaboradores/marcone_slide1.jpg"
+      }
+     
+    ]
+  },
+    
+  {
+    "id": 3,
+    "nome": "Marcielle ",
+    "imagem": "/images/colaboradores/profile3.jpg",
+    "slides": [
+      {
+        "title": "Quem é Marcielle",
+        "description": "Coordenadora do Núcleo de Educação Permanente.",
+        "image": "/images/colaboradores/profile3.jpg"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "nome": "Alex ",
+    "imagem": "/images/colaboradores/profile4.jpg",
+    "raridade": "epico",
+    "slides": [
+      {
+        "title": "Quem é Alexsandro Miranda de Vasconcelos",
+        "description": "Secretário de Saúde da Vitória de Santo Antão. Vitoriense, pai de Bernardo e Heitor, administrador, MBA em gestão publica, esp. gestão de pessoas.",
+        "image": "/images/colaboradores/alex_capa.jpg"
+      }
+    ]
+  },
+ 
+  {
+    "id": 5,
+    "nome": "Paulo ",
+    "imagem": "/images/colaboradores/profile5.jpg",
+    "slides": [
+      {
+        "title": "Quem é Paulo Roberto",
+        "description": "Prefeito da Vitória de Santo Antão 👨‍👩‍👧 Pai de cinco filhos e avô de treze netos.",
+        "image": "/images/colaboradores/paulo_slide1.jpg"
+      }
+    ]
+  }
+]

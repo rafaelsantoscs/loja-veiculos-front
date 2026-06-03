@@ -1,0 +1,39 @@
+[
+  {
+    "src": "/images/cenarios/1.png",
+    "alt": "Helicóptero SAMU",
+    "descricao": "Helicóptero de Resgate",
+    "position": "left"
+  },
+  {
+    "src": "/images/cenarios/2.png",
+    "alt": "Helicóptero SAMU",
+    "descricao": "Viatura de Atendimento",
+    "position": "right"
+  },
+  {
+    "src": "/images/cenarios/3.png",
+    "alt": "Helicóptero SAMU",
+    "descricao": "Helicóptero de Resgate",
+    "position": "left"
+  },
+  {
+    "src": "/images/cenarios/5.png",
+    "alt": "Helicóptero SAMU",
+    "descricao": "Viatura de Atendimento",
+    "position": "right"
+  }
+  ,
+  {
+    "src": "/images/cenarios/6.png",
+    "alt": "Helicóptero SAMU",
+    "descricao": "Helicóptero de Resgate",
+    "position": "left"
+  },
+  {
+    "src": "/images/cenarios/7.png",
+    "alt": "Helicóptero SAMU",
+    "descricao": "Viatura de Atendimento",
+    "position": "right"
+  }
+]
