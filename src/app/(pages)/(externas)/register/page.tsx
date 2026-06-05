@@ -144,7 +144,7 @@ const SignUpVisa: React.FC = () => {
       });
   
       if (response.status === 201) {
-        router.push('/confirmar-email');
+        router.push('/login');
       } else {
         setErrorMessage('Erro ao cadastrar. Tente novamente.');
       }
