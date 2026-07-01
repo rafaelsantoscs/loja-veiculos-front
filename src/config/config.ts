@@ -1,5 +1,5 @@
 
-export const BASE_URL = 'http://localhost:8086/suporte-vsa';
+export const BASE_URL = 'http://localhost:8086/loja-veiculos';
 //export const BASE_URL = 'http://192.168.20.222:8085/frota-vsa';
 //export const BASE_URL = 'http://192.168.20.39:8086/suporte-vsa';
 

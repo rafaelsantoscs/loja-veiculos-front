@@ -18,7 +18,7 @@ import {
   ShieldCheck,
   DoorOpen,
   LogOut,
-  
+  Car,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { clearUserLocalStorage } from "@/store/userLocalStorage";
@@ -134,6 +134,23 @@ export default function SidebarGamificada({ isOpen = true, onToggle }: SidebarPr
       href: '/dashboard',
       icon: Home,
       description: 'Visão geral do sistema'
+    },
+    {
+      title: 'Veículos',
+      icon: Car,
+      description: 'Gestão do estoque',
+      children: [
+        {
+          title: 'Estoque',
+          href: '/veiculo-admin',
+          description: 'Listar e gerenciar veículos'
+        },
+        {
+          title: 'Novo Veículo',
+          href: '/veiculo-admin/novo-veiculo',
+          description: 'Cadastrar um novo veículo'
+        }
+      ]
     },
     {
       title: 'Formulários',

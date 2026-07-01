@@ -35,7 +35,9 @@ axiosInstance.interceptors.request.use(
           console.error('Erro ao parsear user do localStorage:', error);
           // Só redireciona se não estiver em uma rota pública e não for rota de auth
           const isPublicRoute = config.url?.includes('/publicas') || 
-                               config.url?.includes('/faq') || 
+                               config.url?.includes('/faq') ||
+                               config.url === '/veiculos' ||
+                               config.url?.match(/^\/veiculos\/\d+$/) !== null ||
                                window.location.pathname.includes('/externo') ||
                                window.location.pathname.includes('/institucional') ||
                                window.location.pathname.includes('/noticias') ||
@@ -48,7 +50,9 @@ axiosInstance.interceptors.request.use(
       } else {
         // Só redireciona se não estiver em uma rota pública e não for rota de auth
         const isPublicRoute = config.url?.includes('/publicas') || 
-                             config.url?.includes('/faq') || 
+                             config.url?.includes('/faq') ||
+                             config.url === '/veiculos' ||
+                             config.url?.match(/^\/veiculos\/\d+$/) !== null ||
                              window.location.pathname.includes('/externo') ||
                              window.location.pathname.includes('/institucional') ||
                              window.location.pathname.includes('/noticias') ||
@@ -91,7 +95,9 @@ axiosInstance.interceptors.response.use(
             sessionStorage.removeItem('user');
             
             const isPublicRoute = error.config.url?.includes('/publicas') || 
-                                 error.config.url?.includes('/faq') || 
+                                 error.config.url?.includes('/faq') ||
+                                 error.config.url === '/veiculos' ||
+                                 error.config.url?.match(/^\/veiculos\/\d+$/) !== null ||
                                  window.location.pathname.includes('/externo') ||
                                  window.location.pathname.includes('/institucional') ||
                                  window.location.pathname.includes('/noticias') ||

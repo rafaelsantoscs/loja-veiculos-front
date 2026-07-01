@@ -1,0 +1,30 @@
+---
+description: Padrões de front-end (estrutura, tema, componentes, Tailwind, serviços e tipagem) para novas telas administrativas da Loja de Veículos.
+globs:
+alwaysApply: true
+---
+
+# Padrões de Front-end — Loja de Veículos
+
+Ao criar ou editar telas do front-end, siga o guia completo em
+[docs/frontend-guidelines.md](mdc:docs/frontend-guidelines.md).
+
+Regras essenciais:
+
+- **Layout**: toda tela interna usa `DefaultLayout` (`@/components/Layouts/DefaultLayout`).
+  Nunca alterar `DefaultLayout` nem `Sidebar` (componentes globais).
+- **Rotas**: páginas em `src/app/(pages)/(internas)/...`; componentes específicos da
+  página em uma pasta `_components/` ao lado do `page.tsx`.
+- **Tema**: dark/light via `next-themes`; centralize classes no hook de tema e trate
+  o estado `mounted` para evitar mismatch de hidratação. Cor primária blue-600→blue-700.
+- **Componentização**: um componente por responsabilidade (tabela, filtros, badges,
+  ações, paginação, modais, empty state, skeleton).
+- **UI**: cards `rounded-2xl border ... backdrop-blur`; botões primários em gradiente
+  azul com `motion.button` (hover/tap scale); inputs via `inputClass`/`selectClass`.
+- **Animações**: Framer Motion para entrada de cards/linhas e modais (`AnimatePresence`).
+- **Listas**: linhas densas e ricas (tabela no desktop, cards no mobile), skeleton de
+  loading (sem spinner de tela cheia) e empty state ilustrado.
+- **API**: sempre `@/services/axiosInstance` (injeta token e trata 401/403). Normalize
+  respostas do backend com um `mapEntidade` e mantenha campos ausentes como opcionais.
+- **Tipos**: em `src/types/<entidade>.ts`; enums de domínio em `UPPER_SNAKE_CASE`.
+- **Formatação pt-BR**: moeda BRL, datas dd/mm/aaaa, números com `Intl.NumberFormat`.
