@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -10,12 +10,10 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Fuel,
-  Users,
-  Calendar,
   LogIn,
   Menu,
-  ChevronDown,
   Phone,
   MapPin,
   Shield,
@@ -24,10 +22,9 @@ import {
   Camera,
   Gauge,
   Settings2,
-  Tag,
   ArrowRight,
   Heart,
-  Share2,
+  SlidersHorizontal,
 } from "lucide-react";
 import axios from "axios";
 import { BASE_URL } from "@/config/config";
@@ -38,7 +35,6 @@ import {
   formatBRL,
   formatKm,
   mapVeiculo,
-  STATUS_LABELS,
 } from "@/app/(pages)/(internas)/veiculo-admin/_components/veiculo.utils";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────────
@@ -94,7 +90,8 @@ function Navbar() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => router.push("/login")}
-              className="hidden sm:flex items-center gap-2 bg-gray-900 hover:bg-black text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all"
+              className="hidden sm:flex items-center gap-2 bg-gray-900 hover:bg-black text-sm font-semibold px-5 py-2.5 rounded-xl transition-all"
+              style={{ color: "#ffffff" }}
             >
               <LogIn className="w-4 h-4" />
               Entrar
@@ -123,7 +120,8 @@ function Navbar() {
                 <a href="#contato" onClick={() => setMenuOpen(false)} className="px-2 py-2 rounded-lg hover:bg-gray-50">Contato</a>
                 <button
                   onClick={() => router.push("/login")}
-                  className="flex items-center gap-2 mt-2 bg-gray-900 text-white font-semibold px-4 py-2 rounded-xl hover:bg-black transition"
+                  className="flex items-center gap-2 mt-2 bg-gray-900 font-semibold px-4 py-2 rounded-xl hover:bg-black transition"
+                  style={{ color: "#ffffff" }}
                 >
                   <LogIn className="w-4 h-4" /> Entrar na conta
                 </button>
@@ -198,95 +196,420 @@ function Hero({ busca, setBusca }: { busca: string; setBusca: (v: string) => voi
   );
 }
 
-// ─── FilterBar ──────────────────────────────────────────────────────────────────
+// ─── Filtros ─────────────────────────────────────────────────────────────────────
+
+const ANO_ATUAL = new Date().getFullYear();
 
 interface Filtros {
   busca: string;
+  tipoVeiculo: "CARRO" | "MOTO" | "";
   marca: string;
+  modelo: string;
+  precoMax: number;   // preço máximo (500000 = Qualquer)
+  anoMin: number;     // ano mínimo de fabricação (2000 = Qualquer)
+  kmMax: number;      // km máxima (300000 = Qualquer)
+  cambio: string;
   combustivel: string;
-  status: string;
+  cor: string;
+  carroceria: string;
 }
 
-function FilterBar({
+const FILTROS_PADRAO: Filtros = {
+  busca: "",
+  tipoVeiculo: "",
+  marca: "",
+  modelo: "",
+  precoMax: 500000,
+  anoMin: 2000,
+  kmMax: 300000,
+  cambio: "",
+  combustivel: "",
+  cor: "",
+  carroceria: "",
+};
+
+// ─── Sliders customizados ─────────────────────────────────────────────────────────
+// Implementação via mouse/touch no window para drag suave e confiável.
+
+const THUMB_CLS =
+  "absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white border-2 border-blue-600 " +
+  "shadow-md cursor-grab active:cursor-grabbing z-10 touch-none";
+
+function SingleRangeSlider({
+  min, max, step, value, onChange,
+}: {
+  min: number; max: number; step: number;
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const dragging = useRef(false);
+  const latest = useRef({ min, max, step, onChange });
+  latest.current = { min, max, step, onChange };
+
+  const fromClientX = (clientX: number) => {
+    if (!trackRef.current) return min;
+    const { left, width } = trackRef.current.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (clientX - left) / width));
+    return Math.round((latest.current.min + ratio * (latest.current.max - latest.current.min)) / latest.current.step) * latest.current.step;
+  };
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent | TouchEvent) => {
+      if (!dragging.current) return;
+      const clientX = "touches" in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
+      latest.current.onChange(fromClientX(clientX));
+    };
+    const onUp = () => { dragging.current = false; };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    window.addEventListener("touchmove", onMove, { passive: false });
+    window.addEventListener("touchend", onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      window.removeEventListener("touchmove", onMove);
+      window.removeEventListener("touchend", onUp);
+    };
+  }, []);
+
+  const pct = ((value - min) / (max - min)) * 100;
+
+  return (
+    <div ref={trackRef} className="relative h-5 my-1 select-none">
+      <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-1.5 rounded-full bg-gray-200 pointer-events-none">
+        <div className="absolute h-full bg-blue-600 rounded-full left-0"
+          style={{ right: `${100 - pct}%` }} />
+      </div>
+      <div className={THUMB_CLS} style={{ left: `calc(${pct}% - 8px)` }}
+        onMouseDown={(e) => { e.preventDefault(); dragging.current = true; }}
+        onTouchStart={(e) => { e.preventDefault(); dragging.current = true; }}
+      />
+    </div>
+  );
+}
+
+// ─── FilterSidebar ────────────────────────────────────────────────────────────────
+
+const selectCls =
+  "w-full px-3 py-2 text-sm border border-gray-200 rounded-xl appearance-none bg-white " +
+  "text-black focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-400 transition cursor-pointer";
+
+const inputCls =
+  "w-full px-3 py-2 text-sm border border-gray-200 rounded-xl bg-white text-black " +
+  "focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-400 transition placeholder-gray-400";
+
+// Conteúdo do sidebar extraído como função pura fora do componente pai para evitar
+// remount a cada render (que destruiria os refs/effects dos sliders durante o drag).
+function SidebarContent({
   filtros,
   setFiltros,
-  marcasDisponiveis,
+  coresDisponiveis,
+  carroceriasDisponiveis,
+  totalResultados,
+  temFiltroAtivo,
+  handleLimpar,
+  isMobile = false,
+}: {
+  filtros: Filtros;
+  setFiltros: React.Dispatch<React.SetStateAction<Filtros>>;
+  coresDisponiveis: string[];
+  carroceriasDisponiveis: string[];
+  totalResultados: number;
+  temFiltroAtivo: boolean;
+  handleLimpar: () => void;
+  isMobile?: boolean;
+}) {
+  const precoLabel = filtros.precoMax >= 500000 ? "Qualquer" : `Até ${formatBRL(filtros.precoMax)}`;
+  const anoLabel = filtros.anoMin <= 2000 ? "Qualquer" : `A partir de ${filtros.anoMin}`;
+  const kmLabel = filtros.kmMax >= 300000 ? "Qualquer" : formatKm(filtros.kmMax);
+
+  const ChevronSvg = () => (
+    <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-black pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  );
+
+  // No mobile, os campos ficam em 2 colunas para aproveitar melhor a largura
+  const grid2 = isMobile ? "grid grid-cols-2 gap-x-3 gap-y-0" : "";
+  const cell = isMobile ? "" : "mb-4";
+  const cellFull = isMobile ? "col-span-2 mb-3" : "mb-4";
+  const cellMb = isMobile ? "mb-3" : "mb-4";
+  const sliderCell = isMobile ? "col-span-2 mb-4" : "mb-5";
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
+      {/* Tabs Carros / Motos */}
+      <div className={`flex rounded-xl border border-gray-200 overflow-hidden ${isMobile ? "mb-4" : "mb-5"}`}>
+        {(["", "MOTO"] as const).map((tipo) => {
+          const isCarros = tipo === "";
+          const ativo = isCarros ? filtros.tipoVeiculo !== "MOTO" : filtros.tipoVeiculo === "MOTO";
+          return (
+            <button
+              key={tipo}
+              onClick={() => setFiltros((f) => ({ ...f, tipoVeiculo: isCarros ? "" : "MOTO" }))}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-semibold transition"
+              style={ativo ? { backgroundColor: "#111827", color: "#ffffff" } : { backgroundColor: "#ffffff", color: "#000000" }}
+            >
+              {isCarros ? (
+                <><Car className="w-4 h-4" /> Carros</>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="5.5" cy="17.5" r="3.5" /><circle cx="18.5" cy="17.5" r="3.5" />
+                    <path d="M15 6h-3l-3 7H5.5" /><path d="M15 6l3 5.5" /><path d="M12 6V3h3" />
+                  </svg>
+                  Motos
+                </>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Header — só no desktop (no mobile está no botão toggle) */}
+      {!isMobile && (
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-1.5 text-xs font-bold text-black uppercase tracking-wider">
+            <Filter className="w-3.5 h-3.5 text-red-500" />
+            FILTROS
+          </div>
+          {temFiltroAtivo && (
+            <button onClick={handleLimpar} className="text-xs text-blue-600 hover:underline font-medium">
+              Limpar
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Campos em grade (2 cols no mobile, 1 col no desktop) */}
+      <div className={grid2}>
+
+        {/* Marca */}
+        <div className={isMobile ? "mb-3" : "mb-4"}>
+          <label className="block text-xs font-semibold text-black mb-1.5">Marca</label>
+          <input type="text" value={filtros.marca}
+            onChange={(e) => setFiltros((f) => ({ ...f, marca: e.target.value }))}
+            placeholder="Digite a marca" className={inputCls} />
+        </div>
+
+        {/* Modelo */}
+        <div className={isMobile ? "mb-3" : "mb-4"}>
+          <label className="block text-xs font-semibold text-black mb-1.5">Modelo</label>
+          <input type="text" value={filtros.modelo}
+            onChange={(e) => setFiltros((f) => ({ ...f, modelo: e.target.value }))}
+            placeholder="Ex: Civic" className={inputCls} />
+        </div>
+
+        {/* Preço máximo — full width */}
+        <div className={`${sliderCell} ${isMobile ? "col-span-2" : ""}`}>
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-xs font-semibold text-black">Faixa de Preço</label>
+            <span className="text-xs text-orange-500 font-semibold">{precoLabel}</span>
+          </div>
+          <SingleRangeSlider min={0} max={500000} step={5000}
+            value={filtros.precoMax}
+            onChange={(v) => setFiltros((f) => ({ ...f, precoMax: v }))} />
+          <div className="flex justify-between text-[10px] text-black mt-1.5">
+            <span>R$ 0</span><span>R$ 500 mil</span>
+          </div>
+        </div>
+
+        {/* Ano mínimo — full width */}
+        <div className={`${sliderCell} ${isMobile ? "col-span-2" : ""}`}>
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-xs font-semibold text-black">Ano de Fabricação</label>
+            <span className="text-xs text-orange-500 font-semibold">{anoLabel}</span>
+          </div>
+          <SingleRangeSlider min={2000} max={ANO_ATUAL} step={1}
+            value={filtros.anoMin}
+            onChange={(v) => setFiltros((f) => ({ ...f, anoMin: v }))} />
+          <div className="flex justify-between text-[10px] text-black mt-1.5">
+            <span>2000</span><span>{ANO_ATUAL}</span>
+          </div>
+        </div>
+
+        {/* Km máxima — full width */}
+        <div className={`${sliderCell} ${isMobile ? "col-span-2" : ""}`}>
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-xs font-semibold text-black">Quilometragem até</label>
+            <span className="text-xs text-orange-500 font-semibold">{kmLabel}</span>
+          </div>
+          <SingleRangeSlider min={0} max={300000} step={5000}
+            value={filtros.kmMax}
+            onChange={(v) => setFiltros((f) => ({ ...f, kmMax: v }))} />
+          <div className="flex justify-between text-[10px] text-black mt-1.5">
+            <span>0 km</span><span>300 mil km</span>
+          </div>
+        </div>
+
+        {/* Câmbio */}
+        <div className={isMobile ? "mb-3" : "mb-4"}>
+          <label className="block text-xs font-semibold text-black mb-1.5">Câmbio</label>
+          <div className="relative">
+            <select value={filtros.cambio} onChange={(e) => setFiltros((f) => ({ ...f, cambio: e.target.value }))} className={selectCls}>
+              <option value="">Todos</option>
+              {["MANUAL", "AUTOMATICO", "CVT", "DCT", "AUTOMATIZADO"].map((c) => (
+                <option key={c} value={c}>{cambioLabel(c)}</option>
+              ))}
+            </select>
+            <ChevronSvg />
+          </div>
+        </div>
+
+        {/* Combustível */}
+        <div className={isMobile ? "mb-3" : "mb-4"}>
+          <label className="block text-xs font-semibold text-black mb-1.5">Combustível</label>
+          <div className="relative">
+            <select value={filtros.combustivel} onChange={(e) => setFiltros((f) => ({ ...f, combustivel: e.target.value }))} className={selectCls}>
+              <option value="">Todos</option>
+              {["GASOLINA", "ETANOL", "FLEX", "DIESEL", "GNV", "ELETRICO", "HIBRIDO"].map((c) => (
+                <option key={c} value={c}>{combustivelLabel(c)}</option>
+              ))}
+            </select>
+            <ChevronSvg />
+          </div>
+        </div>
+
+        {/* Cor */}
+        <div className={isMobile ? "mb-3" : "mb-4"}>
+          <label className="block text-xs font-semibold text-black mb-1.5">Cor</label>
+          <div className="relative">
+            <select value={filtros.cor} onChange={(e) => setFiltros((f) => ({ ...f, cor: e.target.value }))} className={selectCls}>
+              <option value="">Todas</option>
+              {coresDisponiveis.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <ChevronSvg />
+          </div>
+        </div>
+
+        {/* Carroceria */}
+        {carroceriasDisponiveis.length > 0 && (
+          <div className={isMobile ? "mb-3" : "mb-2"}>
+            <label className="block text-xs font-semibold text-black mb-1.5">Carroceria</label>
+            <div className="relative">
+              <select value={filtros.carroceria} onChange={(e) => setFiltros((f) => ({ ...f, carroceria: e.target.value }))} className={selectCls}>
+                <option value="">Todas</option>
+                {carroceriasDisponiveis.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <ChevronSvg />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Total */}
+      <div className="mt-3 pt-3 border-t border-gray-100 text-center text-sm text-black font-medium">
+        {totalResultados} {totalResultados === 1 ? "veículo encontrado" : "veículos encontrados"}
+      </div>
+    </div>
+  );
+}
+
+function FilterSidebar({
+  filtros,
+  setFiltros,
+  coresDisponiveis,
+  carroceriasDisponiveis,
   totalResultados,
 }: {
   filtros: Filtros;
   setFiltros: React.Dispatch<React.SetStateAction<Filtros>>;
-  marcasDisponiveis: string[];
+  coresDisponiveis: string[];
+  carroceriasDisponiveis: string[];
   totalResultados: number;
 }) {
-  const temFiltroAtivo = filtros.marca !== "" || filtros.combustivel !== "" || filtros.status !== "";
+  const [mobileAberto, setMobileAberto] = useState(false);
+
+  const temFiltroAtivo =
+    filtros.tipoVeiculo !== "" ||
+    filtros.marca !== "" ||
+    filtros.modelo !== "" ||
+    filtros.precoMax < 500000 ||
+    filtros.anoMin > 2000 ||
+    filtros.kmMax < 300000 ||
+    filtros.cambio !== "" ||
+    filtros.combustivel !== "" ||
+    filtros.cor !== "" ||
+    filtros.carroceria !== "";
+
+  const activeCount = [
+    filtros.tipoVeiculo !== "",
+    filtros.marca !== "",
+    filtros.modelo !== "",
+    filtros.precoMax < 500000,
+    filtros.anoMin > 2000,
+    filtros.kmMax < 300000,
+    filtros.cambio !== "",
+    filtros.combustivel !== "",
+    filtros.cor !== "",
+    filtros.carroceria !== "",
+  ].filter(Boolean).length;
+
+  const handleLimpar = () => setFiltros((f) => ({ ...FILTROS_PADRAO, busca: f.busca }));
+
+  const sharedProps = { filtros, setFiltros, coresDisponiveis, carroceriasDisponiveis, totalResultados, temFiltroAtivo, handleLimpar };
 
   return (
-    <div id="catalogo" className="bg-white border-b border-gray-200/50 shadow-sm sticky top-20 z-40">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 text-black text-sm font-medium">
-            <Filter className="w-4 h-4" />
-            <span className="hidden sm:inline">Filtrar:</span>
+    <>
+      {/* ── Mobile: botão full-width + drawer acima dos cards ── */}
+      <div className="lg:hidden w-full">
+        <motion.button
+          whileTap={{ scale: 0.98 }}
+          onClick={() => setMobileAberto((v) => !v)}
+          className="w-full flex items-center justify-between px-4 py-3 rounded-2xl border bg-white shadow-sm transition"
+          style={{ color: "#000000", borderColor: mobileAberto ? "#2563eb" : "#e5e7eb" }}
+        >
+          <div className="flex items-center gap-2">
+            <SlidersHorizontal className="w-4 h-4 text-blue-600" />
+            <span className="text-sm font-semibold">Filtros</span>
+            {activeCount > 0 && (
+              <span
+                className="text-xs font-bold rounded-full px-2 py-0.5 leading-none"
+                style={{ backgroundColor: "#2563eb", color: "#ffffff" }}
+              >
+                {activeCount} ativo{activeCount !== 1 ? "s" : ""}
+              </span>
+            )}
           </div>
-
-          <div className="relative">
-            <select
-              value={filtros.marca}
-              onChange={(e) => setFiltros((f) => ({ ...f, marca: e.target.value }))}
-              className="appearance-none pl-3 pr-8 py-2 text-sm border border-gray-200 rounded-xl bg-white text-gray-900 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-300 cursor-pointer transition"
-            >
-              <option value="">Todas as Marcas</option>
-              {marcasDisponiveis.map((m) => <option key={m} value={m}>{m}</option>)}
-            </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-black pointer-events-none" />
+          <div className="flex items-center gap-2">
+            {temFiltroAtivo && (
+              <button
+                onClick={(e) => { e.stopPropagation(); handleLimpar(); }}
+                className="text-xs text-blue-600 hover:underline font-medium"
+              >
+                Limpar
+              </button>
+            )}
+            <ChevronDown
+              className="w-4 h-4 transition-transform duration-200"
+              style={{ transform: mobileAberto ? "rotate(180deg)" : "rotate(0deg)" }}
+            />
           </div>
+        </motion.button>
 
-          <div className="relative">
-            <select
-              value={filtros.combustivel}
-              onChange={(e) => setFiltros((f) => ({ ...f, combustivel: e.target.value }))}
-              className="appearance-none pl-3 pr-8 py-2 text-sm border border-gray-200 rounded-xl bg-white text-gray-900 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-300 cursor-pointer transition"
+        <AnimatePresence>
+          {mobileAberto && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden mt-2"
             >
-              <option value="">Combustível</option>
-              {["GASOLINA","ETANOL","FLEX","DIESEL","GNV","ELETRICO","HIBRIDO"].map((c) => (
-                <option key={c} value={c}>{combustivelLabel(c)}</option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-black pointer-events-none" />
-          </div>
-
-          <div className="relative">
-            <select
-              value={filtros.status}
-              onChange={(e) => setFiltros((f) => ({ ...f, status: e.target.value }))}
-              className="appearance-none pl-3 pr-8 py-2 text-sm border border-gray-200 rounded-xl bg-white text-gray-900 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-300 cursor-pointer transition"
-            >
-              <option value="">Todos os Status</option>
-              {Object.entries(STATUS_LABELS).map(([k, v]) => (
-                <option key={k} value={k}>{v}</option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-black pointer-events-none" />
-          </div>
-
-          {temFiltroAtivo && (
-            <motion.button
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              onClick={() => setFiltros((f) => ({ ...f, marca: "", combustivel: "", status: "" }))}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 transition"
-            >
-              <X className="w-3.5 h-3.5" />
-              Limpar filtros
-            </motion.button>
+              <SidebarContent {...sharedProps} isMobile />
+            </motion.div>
           )}
-
-          <div className="ml-auto text-sm text-black font-medium">
-            {totalResultados} {totalResultados === 1 ? "veículo" : "veículos"} encontrado{totalResultados !== 1 ? "s" : ""}
-          </div>
-        </div>
+        </AnimatePresence>
       </div>
-    </div>
+
+      {/* ── Desktop: sidebar lateral esquerda ── */}
+      <aside className="hidden lg:block w-64 flex-shrink-0">
+        <div className="sticky top-28">
+          <SidebarContent {...sharedProps} />
+        </div>
+      </aside>
+    </>
   );
 }
 
@@ -649,20 +972,26 @@ function Footer() {
 
 const ITENS_POR_PAGINA = 12;
 
+const MOTO_CATEGORIAS = ["MOTO", "MOTOCICLETA", "SCOOTER", "TRICICLO", "QUADRICICLO"];
+
+function isMoto(v: Veiculo) {
+  return MOTO_CATEGORIAS.some((t) => (v.categoria ?? "").toUpperCase().includes(t));
+}
+
 export default function ExternoPage() {
   const [veiculos, setVeiculos] = useState<Veiculo[]>([]);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState("");
 
-  const [filtros, setFiltros] = useState<Filtros>({ busca: "", marca: "", combustivel: "", status: "" });
+  const [filtros, setFiltros] = useState<Filtros>(FILTROS_PADRAO);
   const [paginaAtual, setPaginaAtual] = useState(1);
 
   useEffect(() => {
     fetchPublic<unknown[]>("/veiculos")
       .then((data) => setVeiculos((data ?? []).map(mapVeiculo)))
       .catch((err: unknown) => {
-        const status = (err as { response?: { status?: number } })?.response?.status;
-        if (status === 401 || status === 403) {
+        const httpStatus = (err as { response?: { status?: number } })?.response?.status;
+        if (httpStatus === 401 || httpStatus === 403) {
           setErro("O catálogo público ainda não está habilitado no servidor. Reinicie o backend para ativar a nova configuração.");
         } else {
           setErro("Não foi possível carregar o catálogo. Verifique sua conexão e tente novamente.");
@@ -671,15 +1000,34 @@ export default function ExternoPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const marcasDisponiveis = Array.from(new Set(veiculos.map((v) => v.marca).filter(Boolean))).sort();
+  const coresDisponiveis = Array.from(
+    new Set(veiculos.map((v) => v.cor).filter(Boolean) as string[])
+  ).sort();
+
+  const carroceriasDisponiveis = Array.from(
+    new Set(veiculos.map((v) => v.categoria).filter(Boolean) as string[])
+  ).sort();
 
   const veiculosFiltrados = veiculos.filter((v) => {
     const q = filtros.busca.toLowerCase();
+    const moto = isMoto(v);
+
     return (
-      (q === "" || v.modelo.toLowerCase().includes(q) || v.marca.toLowerCase().includes(q) || (v.cor ?? "").toLowerCase().includes(q)) &&
-      (filtros.marca === "" || v.marca === filtros.marca) &&
+      (filtros.tipoVeiculo === "" || (filtros.tipoVeiculo === "MOTO" ? moto : !moto)) &&
+      (q === "" ||
+        v.modelo.toLowerCase().includes(q) ||
+        v.marca.toLowerCase().includes(q) ||
+        (v.cor ?? "").toLowerCase().includes(q)) &&
+      (filtros.marca === "" || v.marca.toLowerCase().includes(filtros.marca.toLowerCase())) &&
+      (filtros.modelo === "" || v.modelo.toLowerCase().includes(filtros.modelo.toLowerCase())) &&
+      (filtros.precoMax >= 500000 || v.valor <= filtros.precoMax) &&
+      (filtros.anoMin <= 2000 || v.anoFabricacao >= filtros.anoMin) &&
+      (filtros.kmMax >= 300000 || v.quilometragem <= filtros.kmMax) &&
+      (filtros.cambio === "" || v.cambio === filtros.cambio) &&
       (filtros.combustivel === "" || v.combustivel === filtros.combustivel) &&
-      (filtros.status === "" || v.status === filtros.status)
+      (filtros.cor === "" || (v.cor ?? "").toLowerCase() === filtros.cor.toLowerCase()) &&
+      (filtros.carroceria === "" ||
+        (v.categoria ?? "").toLowerCase() === filtros.carroceria.toLowerCase())
     );
   });
 
@@ -689,17 +1037,35 @@ export default function ExternoPage() {
     paginaAtual * ITENS_POR_PAGINA
   );
 
-  const handleBusca = useCallback((v: string) => { setFiltros((f) => ({ ...f, busca: v })); setPaginaAtual(1); }, []);
-  const handleFiltros = useCallback((fn: React.SetStateAction<Filtros>) => { setFiltros(fn); setPaginaAtual(1); }, []);
-  const temFiltroAtivo = filtros.busca !== "" || filtros.marca !== "" || filtros.combustivel !== "" || filtros.status !== "";
+  const handleBusca = useCallback((v: string) => {
+    setFiltros((f) => ({ ...f, busca: v }));
+    setPaginaAtual(1);
+  }, []);
+
+  const handleFiltros = useCallback((fn: React.SetStateAction<Filtros>) => {
+    setFiltros(fn);
+    setPaginaAtual(1);
+  }, []);
+
+  const temFiltroAtivo =
+    filtros.busca !== "" ||
+    filtros.tipoVeiculo !== "" ||
+    filtros.marca !== "" ||
+    filtros.modelo !== "" ||
+    filtros.precoMax < 500000 ||
+    filtros.anoMin > 2000 ||
+    filtros.kmMax < 300000 ||
+    filtros.cambio !== "" ||
+    filtros.combustivel !== "" ||
+    filtros.cor !== "" ||
+    filtros.carroceria !== "";
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] flex flex-col">
       <Navbar />
       <Hero busca={filtros.busca} setBusca={handleBusca} />
-      <FilterBar filtros={filtros} setFiltros={handleFiltros} marcasDisponiveis={marcasDisponiveis} totalResultados={veiculosFiltrados.length} />
 
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+      <main id="catalogo" className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
         {erro && (
           <motion.div
             initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
@@ -710,16 +1076,35 @@ export default function ExternoPage() {
           </motion.div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-          {loading
-            ? [...Array(8)].map((_, i) => <VeiculoSkeleton key={i} />)
-            : veiculosPaginados.length === 0
-            ? <EmptyState temFiltro={temFiltroAtivo} />
-            : veiculosPaginados.map((v, i) => <VeiculoCardPublico key={v.id} veiculo={v} index={i} />)
-          }
-        </div>
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 items-start">
+          {/* Sidebar de filtros */}
+          <FilterSidebar
+            filtros={filtros}
+            setFiltros={handleFiltros}
+            coresDisponiveis={coresDisponiveis}
+            carroceriasDisponiveis={carroceriasDisponiveis}
+            totalResultados={veiculosFiltrados.length}
+          />
 
-        <Pagination paginaAtual={paginaAtual} totalPaginas={totalPaginas} onChange={setPaginaAtual} />
+          {/* Grid de cards */}
+          <div className="flex-1 min-w-0">
+            <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-5">
+              {loading
+                ? [...Array(8)].map((_, i) => <VeiculoSkeleton key={i} />)
+                : veiculosPaginados.length === 0
+                ? <EmptyState temFiltro={temFiltroAtivo} />
+                : veiculosPaginados.map((v, i) => (
+                    <VeiculoCardPublico key={v.id} veiculo={v} index={i} />
+                  ))}
+            </div>
+
+            <Pagination
+              paginaAtual={paginaAtual}
+              totalPaginas={totalPaginas}
+              onChange={setPaginaAtual}
+            />
+          </div>
+        </div>
       </main>
 
       <Footer />
