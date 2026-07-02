@@ -26,6 +26,8 @@ import {
   Settings2,
   Tag,
   ArrowRight,
+  Heart,
+  Share2,
 } from "lucide-react";
 import axios from "axios";
 import { BASE_URL } from "@/config/config";
@@ -47,12 +49,12 @@ async function fetchPublic<T>(url: string): Promise<T> {
 }
 
 const STATUS_BADGE: Record<string, { label: string; cls: string; dot: string }> = {
-  DISPONIVEL: { label: "Disponível", cls: "bg-green-100 text-green-800 border-green-200", dot: "bg-green-500" },
+  DISPONIVEL: { label: "Disponível", cls: "bg-emerald-100 text-emerald-800 border-emerald-200", dot: "bg-emerald-500" },
   RESERVADO: { label: "Reservado", cls: "bg-amber-100 text-amber-800 border-amber-200", dot: "bg-amber-500" },
   EM_NEGOCIACAO: { label: "Em negociação", cls: "bg-blue-100 text-blue-800 border-blue-200", dot: "bg-blue-500" },
   EM_PREPARACAO: { label: "Em preparação", cls: "bg-purple-100 text-purple-800 border-purple-200", dot: "bg-purple-500" },
-  VENDIDO: { label: "Vendido", cls: "bg-red-100 text-red-800 border-red-200", dot: "bg-red-500" },
-  INATIVO: { label: "Inativo", cls: "bg-gray-100 text-gray-600 border-gray-200", dot: "bg-gray-400" },
+  VENDIDO: { label: "Vendido", cls: "bg-gray-100 text-black border-gray-200", dot: "bg-gray-500" },
+  INATIVO: { label: "Inativo", cls: "bg-red-50 text-red-700 border-red-200", dot: "bg-red-500" },
 };
 
 // ─── Navbar ──────────────────────────────────────────────────────────────────────
@@ -62,31 +64,37 @@ function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+    <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-200/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-20">
           <a href="/externo" className="flex items-center gap-2">
-            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 shadow-md">
-              <Car className="w-5 h-5 text-white" />
-            </div>
+            <img
+              src="/logo-232motors.png"
+              alt="232 Motors"
+              className="w-12 h-12 object-contain mix-blend-multiply"
+            />
             <div className="leading-tight">
-              <span className="block text-base font-bold text-gray-900">AutoStore</span>
-              <span className="block text-[10px] text-gray-500 -mt-0.5 font-medium tracking-wide uppercase">Loja de Veículos</span>
+              <span className="block text-xl font-extrabold text-black tracking-tight">
+                232<span className="text-blue-600">MOTORS</span>
+              </span>
+              <span className="block text-[10px] text-black -mt-0.5 font-medium tracking-wide uppercase">
+                Loja de Veículos
+              </span>
             </div>
           </a>
 
-          <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
-            <a href="#catalogo" className="hover:text-orange-600 transition-colors">Catálogo</a>
-            <a href="#sobre" className="hover:text-orange-600 transition-colors">Sobre Nós</a>
-            <a href="#contato" className="hover:text-orange-600 transition-colors">Contato</a>
+          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-black">
+            <a href="#catalogo" className="hover:text-black transition-colors">Catálogo</a>
+            <a href="#sobre" className="hover:text-black transition-colors">Sobre Nós</a>
+            <a href="#contato" className="hover:text-black transition-colors">Contato</a>
           </nav>
 
           <div className="flex items-center gap-3">
             <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => router.push("/login")}
-              className="hidden sm:flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white text-sm font-semibold px-4 py-2 rounded-xl shadow transition-all"
+              className="hidden sm:flex items-center gap-2 bg-gray-900 hover:bg-black text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all"
             >
               <LogIn className="w-4 h-4" />
               Entrar
@@ -94,7 +102,7 @@ function Navbar() {
 
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+              className="md:hidden p-2 rounded-lg text-black hover:bg-gray-100 transition-colors"
             >
               {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -109,13 +117,13 @@ function Navbar() {
               exit={{ opacity: 0, height: 0 }}
               className="md:hidden overflow-hidden border-t border-gray-100"
             >
-              <nav className="py-3 flex flex-col gap-1 text-sm font-medium text-gray-600">
+              <nav className="py-3 flex flex-col gap-1 text-sm font-medium text-black">
                 <a href="#catalogo" onClick={() => setMenuOpen(false)} className="px-2 py-2 rounded-lg hover:bg-gray-50">Catálogo</a>
                 <a href="#sobre" onClick={() => setMenuOpen(false)} className="px-2 py-2 rounded-lg hover:bg-gray-50">Sobre Nós</a>
                 <a href="#contato" onClick={() => setMenuOpen(false)} className="px-2 py-2 rounded-lg hover:bg-gray-50">Contato</a>
                 <button
                   onClick={() => router.push("/login")}
-                  className="flex items-center gap-2 mt-2 bg-gradient-to-r from-orange-500 to-red-600 text-white font-semibold px-4 py-2 rounded-xl"
+                  className="flex items-center gap-2 mt-2 bg-gray-900 text-white font-semibold px-4 py-2 rounded-xl hover:bg-black transition"
                 >
                   <LogIn className="w-4 h-4" /> Entrar na conta
                 </button>
@@ -132,16 +140,24 @@ function Navbar() {
 
 function Hero({ busca, setBusca }: { busca: string; setBusca: (v: string) => void }) {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-orange-500 via-red-500 to-rose-600 text-white py-14 px-4">
-      <div className="absolute -top-20 -right-20 w-96 h-96 bg-white/5 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-white/5 rounded-full blur-3xl pointer-events-none" />
+    <section className="relative overflow-hidden text-white min-h-[560px] flex items-center px-4">
+      {/* Imagem de capa da loja — img direta para preservar qualidade original */}
+      <img
+        src="/loja-capa.png"
+        alt="Fachada da loja"
+        className="absolute inset-0 w-full h-full object-cover object-[75%_5%]"
+      />
+      {/* Overlay escuro para legibilidade */}
+      <div className="absolute inset-0 bg-gradient-to-b from-gray-900/80 via-gray-900/65 to-gray-900/85" />
+      <div className="absolute -top-20 -right-20 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="relative max-w-3xl mx-auto text-center">
+      <div className="relative w-full max-w-3xl mx-auto text-center py-16">
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight mb-3 drop-shadow">
-            Encontre o carro ideal
+            Encontre o carro <span className="text-blue-400">ideal</span>
           </h1>
-          <p className="text-white/80 text-base sm:text-lg mb-8">
+          <p className="text-gray-300 text-base sm:text-lg mb-8">
             Explore nosso catálogo completo com as melhores opções disponíveis
           </p>
         </motion.div>
@@ -152,16 +168,16 @@ function Hero({ busca, setBusca }: { busca: string; setBusca: (v: string) => voi
           transition={{ duration: 0.5, delay: 0.15 }}
           className="relative flex items-center bg-white rounded-2xl shadow-2xl overflow-hidden max-w-2xl mx-auto"
         >
-          <Search className="absolute left-4 w-5 h-5 text-gray-400 pointer-events-none" />
+          <Search className="absolute left-4 w-5 h-5 text-black pointer-events-none" />
           <input
             type="text"
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             placeholder="Busque por marca, modelo ou cor..."
-            className="flex-1 pl-12 pr-4 py-4 text-gray-800 text-sm sm:text-base placeholder-gray-400 outline-none bg-transparent"
+            className="flex-1 pl-12 pr-4 py-4 text-black text-sm sm:text-base placeholder-gray-400 outline-none bg-transparent"
           />
           {busca && (
-            <button onClick={() => setBusca("")} className="pr-4 text-gray-400 hover:text-gray-600 transition-colors">
+            <button onClick={() => setBusca("")} className="pr-4 text-black hover:text-black transition-colors">
               <X className="w-4 h-4" />
             </button>
           )}
@@ -171,18 +187,18 @@ function Hero({ busca, setBusca }: { busca: string; setBusca: (v: string) => voi
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.35 }}
-          className="flex items-center justify-center gap-6 mt-8 text-white/70 text-xs sm:text-sm"
+          className="flex items-center justify-center gap-6 mt-8 text-gray-300 text-xs sm:text-sm"
         >
-          <span className="flex items-center gap-1.5"><Shield className="w-3.5 h-3.5" /> Veículos verificados</span>
-          <span className="flex items-center gap-1.5"><Star className="w-3.5 h-3.5" /> Qualidade garantida</span>
-          <span className="flex items-center gap-1.5"><Zap className="w-3.5 h-3.5" /> Consulta rápida</span>
+          <span className="flex items-center gap-1.5"><Shield className="w-3.5 h-3.5 text-blue-400" /> Veículos verificados</span>
+          <span className="flex items-center gap-1.5"><Star className="w-3.5 h-3.5 text-blue-400" /> Qualidade garantida</span>
+          <span className="flex items-center gap-1.5"><Zap className="w-3.5 h-3.5 text-blue-400" /> Consulta rápida</span>
         </motion.div>
       </div>
     </section>
   );
 }
 
-// ─── FilterBar ───────────────────────────────────────────────────────────────────
+// ─── FilterBar ──────────────────────────────────────────────────────────────────
 
 interface Filtros {
   busca: string;
@@ -205,52 +221,52 @@ function FilterBar({
   const temFiltroAtivo = filtros.marca !== "" || filtros.combustivel !== "" || filtros.status !== "";
 
   return (
-    <div id="catalogo" className="bg-white border-b border-gray-200 shadow-sm sticky top-16 z-40">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+    <div id="catalogo" className="bg-white border-b border-gray-200/50 shadow-sm sticky top-20 z-40">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 text-gray-500 text-sm font-medium">
+          <div className="flex items-center gap-2 text-black text-sm font-medium">
             <Filter className="w-4 h-4" />
-            <span>Filtrar:</span>
+            <span className="hidden sm:inline">Filtrar:</span>
           </div>
 
           <div className="relative">
             <select
               value={filtros.marca}
               onChange={(e) => setFiltros((f) => ({ ...f, marca: e.target.value }))}
-              className="appearance-none pl-3 pr-8 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 text-gray-700 hover:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-300 cursor-pointer transition"
+              className="appearance-none pl-3 pr-8 py-2 text-sm border border-gray-200 rounded-xl bg-white text-gray-900 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-300 cursor-pointer transition"
             >
               <option value="">Todas as Marcas</option>
               {marcasDisponiveis.map((m) => <option key={m} value={m}>{m}</option>)}
             </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-black pointer-events-none" />
           </div>
 
           <div className="relative">
             <select
               value={filtros.combustivel}
               onChange={(e) => setFiltros((f) => ({ ...f, combustivel: e.target.value }))}
-              className="appearance-none pl-3 pr-8 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 text-gray-700 hover:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-300 cursor-pointer transition"
+              className="appearance-none pl-3 pr-8 py-2 text-sm border border-gray-200 rounded-xl bg-white text-gray-900 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-300 cursor-pointer transition"
             >
               <option value="">Combustível</option>
               {["GASOLINA","ETANOL","FLEX","DIESEL","GNV","ELETRICO","HIBRIDO"].map((c) => (
                 <option key={c} value={c}>{combustivelLabel(c)}</option>
               ))}
             </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-black pointer-events-none" />
           </div>
 
           <div className="relative">
             <select
               value={filtros.status}
               onChange={(e) => setFiltros((f) => ({ ...f, status: e.target.value }))}
-              className="appearance-none pl-3 pr-8 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 text-gray-700 hover:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-300 cursor-pointer transition"
+              className="appearance-none pl-3 pr-8 py-2 text-sm border border-gray-200 rounded-xl bg-white text-gray-900 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-300 cursor-pointer transition"
             >
               <option value="">Todos os Status</option>
               {Object.entries(STATUS_LABELS).map(([k, v]) => (
                 <option key={k} value={k}>{v}</option>
               ))}
             </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-black pointer-events-none" />
           </div>
 
           {temFiltroAtivo && (
@@ -265,7 +281,7 @@ function FilterBar({
             </motion.button>
           )}
 
-          <div className="ml-auto text-sm text-gray-500 font-medium">
+          <div className="ml-auto text-sm text-black font-medium">
             {totalResultados} {totalResultados === 1 ? "veículo" : "veículos"} encontrado{totalResultados !== 1 ? "s" : ""}
           </div>
         </div>
@@ -279,7 +295,6 @@ function FilterBar({
 function VeiculoCardPublico({ veiculo, index }: { veiculo: Veiculo; index: number }) {
   const router = useRouter();
 
-  // Inicializa com fotoPrincipal que já vem na listagem — exibe imediatamente
   const inicial: FotoVeiculo[] = veiculo.fotoPrincipal
     ? [{ id: 0, url: veiculo.fotoPrincipal, ordem: 0, principal: true }]
     : [];
@@ -289,7 +304,6 @@ function VeiculoCardPublico({ veiculo, index }: { veiculo: Veiculo; index: numbe
   const [fotoIdx, setFotoIdx] = useState(0);
   const [fotoErro, setFotoErro] = useState(false);
 
-  // Busca todas as fotos em segundo plano para habilitar o carrossel
   useEffect(() => {
     let ativo = true;
     fetchPublic<FotoVeiculo[]>(`/veiculos/${veiculo.id}/fotos`)
@@ -328,11 +342,11 @@ function VeiculoCardPublico({ veiculo, index }: { veiculo: Veiculo; index: numbe
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.04 * (index % 12) }}
-      className="group bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200 overflow-hidden flex flex-col cursor-pointer"
+      className="group bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col cursor-pointer"
     >
       {/* ── Foto ────────────────────────────────────────────────────── */}
       <div
-        className="relative aspect-[4/3] w-full overflow-hidden bg-slate-900"
+        className="relative aspect-[4/3] w-full overflow-hidden bg-gray-900"
         onClick={() => router.push(`/externo/${veiculo.id}`)}
       >
         {temFotos ? (
@@ -353,25 +367,23 @@ function VeiculoCardPublico({ veiculo, index }: { veiculo: Veiculo; index: numbe
 
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/60 to-transparent" />
 
-            {/* Setas — sempre visíveis quando há múltiplas fotos */}
             {temMultiplasFotos && (
               <>
                 <button
                   onClick={(e) => irFoto(-1, e)}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 hover:bg-black/75 text-white backdrop-blur-sm transition-colors z-10"
+                  className="absolute left-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 hover:bg-black/75 text-white backdrop-blur-sm transition-colors z-10 opacity-0 group-hover:opacity-100"
                   aria-label="Foto anterior"
                 >
                   <ChevronLeft className="h-5 w-5" />
                 </button>
                 <button
                   onClick={(e) => irFoto(1, e)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 hover:bg-black/75 text-white backdrop-blur-sm transition-colors z-10"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 hover:bg-black/75 text-white backdrop-blur-sm transition-colors z-10 opacity-0 group-hover:opacity-100"
                   aria-label="Próxima foto"
                 >
                   <ChevronRight className="h-5 w-5" />
                 </button>
 
-                {/* Dots */}
                 <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5 z-10">
                   {fotos.slice(0, 8).map((_, i) => (
                     <button
@@ -385,7 +397,6 @@ function VeiculoCardPublico({ veiculo, index }: { veiculo: Veiculo; index: numbe
               </>
             )}
 
-            {/* Contador */}
             {fotosCarregadas && fotos.length > 1 && (
               <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-black/60 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-sm pointer-events-none">
                 <Camera className="h-3.5 w-3.5" />
@@ -395,8 +406,8 @@ function VeiculoCardPublico({ veiculo, index }: { veiculo: Veiculo; index: numbe
           </>
         ) : (
           <div className="flex h-full flex-col items-center justify-center gap-2">
-            <Car className="h-12 w-12 text-slate-600" />
-            <p className="text-xs text-slate-500">Sem fotos</p>
+            <Car className="h-12 w-12 text-black" />
+            <p className="text-xs text-black">Sem fotos</p>
           </div>
         )}
 
@@ -413,24 +424,29 @@ function VeiculoCardPublico({ veiculo, index }: { veiculo: Veiculo; index: numbe
         className="p-4 flex flex-col gap-3 flex-1"
         onClick={() => router.push(`/externo/${veiculo.id}`)}
       >
-        {/* Status */}
-        <span className={`inline-flex items-center gap-1.5 self-start px-2.5 py-1 rounded-full text-xs font-semibold border ${badge.cls}`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
-          {badge.label}
-        </span>
+        <div className="flex items-start justify-between gap-2">
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${badge.cls}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
+            {badge.label}
+          </span>
+          <button 
+            onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}
+            className="p-1.5 rounded-full hover:bg-gray-100 transition-colors text-black hover:text-black"
+          >
+            <Heart className="w-4 h-4" />
+          </button>
+        </div>
 
-        {/* Título */}
         <div>
-          <h3 className="text-base font-bold text-gray-900 leading-tight truncate">
+          <h3 className="text-base font-bold text-black leading-tight truncate">
             {veiculo.marca} {veiculo.modelo}
           </h3>
-          <p className="text-sm text-gray-500 mt-0.5 truncate">
+          <p className="text-sm text-black mt-0.5 truncate">
             {veiculo.versao ? `${veiculo.versao} · ` : ""}{veiculo.anoFabricacao}/{veiculo.anoModelo}
             {veiculo.cor ? ` · ${veiculo.cor}` : ""}
           </p>
         </div>
 
-        {/* Chips */}
         <div className="flex flex-wrap gap-1.5">
           {veiculo.combustivel && (
             <Chip icon={Fuel} label={combustivelLabel(veiculo.combustivel as string)} />
@@ -446,16 +462,15 @@ function VeiculoCardPublico({ veiculo, index }: { veiculo: Veiculo; index: numbe
           )}
         </div>
 
-        {/* Preço + CTA */}
         <div className="mt-auto pt-3 border-t border-gray-100 flex items-center justify-between gap-3">
           <div>
             {veiculo.valor > 0 ? (
-              <p className="text-xl font-bold text-orange-600">{formatBRL(veiculo.valor)}</p>
+              <p className="text-xl font-bold text-blue-600">{formatBRL(veiculo.valor)}</p>
             ) : (
-              <p className="text-sm font-medium text-gray-400">Consulte o valor</p>
+              <p className="text-sm font-medium text-black">Consulte o valor</p>
             )}
             {veiculo.valorFipe && (
-              <p className="text-xs text-gray-400">FIPE {formatBRL(veiculo.valorFipe)}</p>
+              <p className="text-xs text-black">FIPE {formatBRL(veiculo.valorFipe)}</p>
             )}
           </div>
 
@@ -464,8 +479,8 @@ function VeiculoCardPublico({ veiculo, index }: { veiculo: Veiculo; index: numbe
             whileTap={{ scale: 0.95 }}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
               isDisponivel
-                ? "bg-gradient-to-r from-orange-500 to-red-600 text-white shadow-sm group-hover:shadow-orange-200"
-                : "bg-gray-100 text-gray-500"
+                ? "bg-gray-900 hover:bg-black text-white shadow-sm"
+                : "bg-gray-100 text-black"
             }`}
           >
             Ver mais
@@ -479,7 +494,7 @@ function VeiculoCardPublico({ veiculo, index }: { veiculo: Veiculo; index: numbe
 
 function Chip({ icon: Icon, label }: { icon: React.ElementType; label: string }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs bg-slate-100 text-slate-600">
+    <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs bg-gray-100 text-black">
       <Icon className="h-3 w-3" />
       {label}
     </span>
@@ -516,12 +531,12 @@ function EmptyState({ temFiltro }: { temFiltro: boolean }) {
       className="col-span-full flex flex-col items-center justify-center py-20 text-center"
     >
       <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-        <Car className="w-10 h-10 text-gray-400" />
+        <Car className="w-10 h-10 text-black" />
       </div>
-      <h3 className="text-lg font-bold text-gray-700 mb-1">
+      <h3 className="text-lg font-bold text-black mb-1">
         {temFiltro ? "Nenhum veículo encontrado" : "Nenhum veículo disponível"}
       </h3>
-      <p className="text-sm text-gray-500 max-w-xs">
+      <p className="text-sm text-black max-w-xs">
         {temFiltro ? "Tente ajustar os filtros ou limpar a busca." : "Nosso catálogo está sendo atualizado. Volte em breve!"}
       </p>
     </motion.div>
@@ -543,7 +558,7 @@ function Pagination({ paginaAtual, totalPaginas, onChange }: { paginaAtual: numb
         whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
         onClick={() => onChange(Math.max(1, paginaAtual - 1))}
         disabled={paginaAtual === 1}
-        className="p-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+        className="p-2 rounded-xl border border-gray-200 text-black hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
       >
         <ChevronLeft className="w-4 h-4" />
       </motion.button>
@@ -553,14 +568,14 @@ function Pagination({ paginaAtual, totalPaginas, onChange }: { paginaAtual: numb
         const ellipsis = prev && p - prev > 1;
         return (
           <span key={p} className="flex items-center gap-2">
-            {ellipsis && <span className="text-gray-400 text-sm px-1">…</span>}
+            {ellipsis && <span className="text-black text-sm px-1">…</span>}
             <motion.button
               whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
               onClick={() => onChange(p)}
               className={`w-10 h-10 rounded-xl text-sm font-semibold border transition ${
                 p === paginaAtual
-                  ? "bg-gradient-to-r from-orange-500 to-red-600 text-white border-transparent shadow-sm"
-                  : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                  ? "bg-gray-900 text-white border-transparent shadow-sm"
+                  : "border-gray-200 text-black hover:bg-gray-50"
               }`}
             >
               {p}
@@ -573,7 +588,7 @@ function Pagination({ paginaAtual, totalPaginas, onChange }: { paginaAtual: numb
         whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
         onClick={() => onChange(Math.min(totalPaginas, paginaAtual + 1))}
         disabled={paginaAtual === totalPaginas}
-        className="p-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+        className="p-2 rounded-xl border border-gray-200 text-black hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
       >
         <ChevronRight className="w-4 h-4" />
       </motion.button>
@@ -585,40 +600,44 @@ function Pagination({ paginaAtual, totalPaginas, onChange }: { paginaAtual: numb
 
 function Footer() {
   return (
-    <footer id="contato" className="bg-gray-900 text-gray-300 mt-16">
+    <footer id="contato" className="bg-white border-t border-gray-200 mt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-8">
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500 to-red-600">
-                <Car className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-white font-bold text-base">AutoStore</span>
+              <img
+                src="/logo-232motors.png"
+                alt="232 Motors"
+                className="w-12 h-12 object-contain mix-blend-multiply"
+              />
+              <span className="text-xl font-extrabold text-black tracking-tight">
+                232<span className="text-blue-600">MOTORS</span>
+              </span>
             </div>
-            <p className="text-sm text-gray-400 leading-relaxed">
+            <p className="text-sm text-black leading-relaxed">
               Sua loja de veículos com as melhores opções do mercado.
             </p>
           </div>
 
           <div id="sobre">
-            <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">Sobre Nós</h4>
-            <ul className="space-y-2 text-sm text-gray-400">
-              <li><a href="#catalogo" className="hover:text-orange-400 transition-colors">Catálogo de Veículos</a></li>
-              <li><a href="#" className="hover:text-orange-400 transition-colors">Quem Somos</a></li>
+            <h4 className="text-black font-semibold mb-3 text-sm uppercase tracking-wide">Sobre Nós</h4>
+            <ul className="space-y-2 text-sm text-black">
+              <li><a href="#catalogo" className="hover:text-black transition-colors">Catálogo de Veículos</a></li>
+              <li><a href="#" className="hover:text-black transition-colors">Quem Somos</a></li>
             </ul>
           </div>
 
           <div>
-            <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">Contato</h4>
-            <ul className="space-y-2 text-sm text-gray-400">
-              <li className="flex items-center gap-2"><Phone className="w-4 h-4 text-orange-500 flex-shrink-0" /><span>(XX) XXXXX-XXXX</span></li>
-              <li className="flex items-center gap-2"><MapPin className="w-4 h-4 text-orange-500 flex-shrink-0" /><span>Sua cidade, Brasil</span></li>
+            <h4 className="text-black font-semibold mb-3 text-sm uppercase tracking-wide">Contato</h4>
+            <ul className="space-y-2 text-sm text-black">
+              <li className="flex items-center gap-2"><Phone className="w-4 h-4 text-black flex-shrink-0" /><span>(XX) XXXXX-XXXX</span></li>
+              <li className="flex items-center gap-2"><MapPin className="w-4 h-4 text-black flex-shrink-0" /><span>Sua cidade, Brasil</span></li>
             </ul>
           </div>
         </div>
 
-        <div className="border-t border-gray-800 pt-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-gray-500">
-          <span>© {new Date().getFullYear()} AutoStore. Todos os direitos reservados.</span>
+        <div className="border-t border-gray-200 pt-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-black">
+          <span>© {new Date().getFullYear()} 232 Motors. Todos os direitos reservados.</span>
           <span>Desenvolvido com ♥</span>
         </div>
       </div>
@@ -675,7 +694,7 @@ export default function ExternoPage() {
   const temFiltroAtivo = filtros.busca !== "" || filtros.marca !== "" || filtros.combustivel !== "" || filtros.status !== "";
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-[#F8F9FA] flex flex-col">
       <Navbar />
       <Hero busca={filtros.busca} setBusca={handleBusca} />
       <FilterBar filtros={filtros} setFiltros={handleFiltros} marcasDisponiveis={marcasDisponiveis} totalResultados={veiculosFiltrados.length} />

@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
@@ -21,11 +20,16 @@ import {
   Shield,
   Star,
   Tag,
-  Users,
   X,
   Zap,
+  CheckCircle2,
+  Share2,
+  Heart,
+  Palette,
+  DoorOpen
 } from "lucide-react";
 import axios from "axios";
+import { useParams, useRouter } from "next/navigation";
 import { BASE_URL } from "@/config/config";
 import type { FotoVeiculo, Veiculo } from "@/types/veiculo";
 import {
@@ -37,7 +41,7 @@ import {
   STATUS_LABELS,
 } from "@/app/(pages)/(internas)/veiculo-admin/_components/veiculo.utils";
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
 
 async function fetchPublic<T>(url: string): Promise<T> {
   const { data } = await axios.get<T>(`${BASE_URL}${url}`);
@@ -45,46 +49,36 @@ async function fetchPublic<T>(url: string): Promise<T> {
 }
 
 const STATUS_BADGE: Record<string, { label: string; cls: string; dot: string }> = {
-  DISPONIVEL: { label: "Disponível", cls: "bg-green-100 text-green-800 border-green-200", dot: "bg-green-500" },
+  DISPONIVEL: { label: "Disponível", cls: "bg-emerald-100 text-emerald-800 border-emerald-200", dot: "bg-emerald-500" },
   RESERVADO: { label: "Reservado", cls: "bg-amber-100 text-amber-800 border-amber-200", dot: "bg-amber-500" },
   EM_NEGOCIACAO: { label: "Em negociação", cls: "bg-blue-100 text-blue-800 border-blue-200", dot: "bg-blue-500" },
   EM_PREPARACAO: { label: "Em preparação", cls: "bg-purple-100 text-purple-800 border-purple-200", dot: "bg-purple-500" },
-  VENDIDO: { label: "Vendido", cls: "bg-red-100 text-red-800 border-red-200", dot: "bg-red-500" },
-  INATIVO: { label: "Inativo", cls: "bg-gray-100 text-gray-600 border-gray-200", dot: "bg-gray-400" },
+  VENDIDO: { label: "Vendido", cls: "bg-gray-100 text-black border-gray-200", dot: "bg-gray-500" },
+  INATIVO: { label: "Inativo", cls: "bg-red-50 text-red-700 border-red-200", dot: "bg-red-500" },
 };
 
-function InfoRow({ label, value }: { label: string; value?: string | number | boolean | null }) {
-  if (value === undefined || value === null || value === "" || value === 0) return null;
-  const display = typeof value === "boolean" ? (value ? "Sim" : "Não") : String(value);
-  return (
-    <div className="flex items-start justify-between gap-4 py-2.5 border-b border-gray-100 last:border-0">
-      <span className="text-sm text-gray-500 min-w-[140px]">{label}</span>
-      <span className="text-sm font-semibold text-gray-800 text-right">{display}</span>
-    </div>
-  );
-}
+// ─── COMPONENTES MENORES ──────────────────────────────────────────────────────
 
-function SectionCard({ icon: Icon, title, children }: { icon: React.ElementType; title: string; children: React.ReactNode }) {
+function SpecCard({ icon: Icon, label, value }: { icon: React.ElementType, label: string, value?: string | number | null }) {
+  if (!value) return null;
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-      <div className="flex items-center gap-2 mb-4">
-        <div className="rounded-lg p-1.5 bg-orange-500/15 text-orange-600">
-          <Icon className="h-4 w-4" />
-        </div>
-        <h3 className="font-bold text-gray-900 text-sm">{title}</h3>
+    <div className="flex flex-col bg-gray-50 p-4 rounded-xl border border-gray-100/50 hover:bg-gray-100/80 transition-colors">
+      <div className="flex items-center gap-2 mb-2">
+        <Icon className="h-4 w-4 text-black" />
+        <span className="text-[11px] font-bold text-black uppercase tracking-wider">{label}</span>
       </div>
-      {children}
+      <span className="text-sm font-semibold text-black truncate">{value}</span>
     </div>
   );
 }
 
-// ─── Galeria de Fotos ──────────────────────────────────────────────────────────
+// ─── GALERIA PREMIUM ─────────────────────────────────────────────────────────
 
 function Galeria({ fotos, titulo }: { fotos: FotoVeiculo[]; titulo: string }) {
   const [idx, setIdx] = useState(0);
   const [lightbox, setLightbox] = useState(false);
 
-  const ir = useCallback((dir: 1 | -1) => {
+  const ir = useCallback((dir: number) => {
     setIdx((p) => (p + dir + fotos.length) % fotos.length);
   }, [fotos.length]);
 
@@ -101,9 +95,9 @@ function Galeria({ fotos, titulo }: { fotos: FotoVeiculo[]; titulo: string }) {
 
   if (fotos.length === 0) {
     return (
-      <div className="aspect-[16/9] rounded-2xl bg-slate-900 flex flex-col items-center justify-center gap-3">
-        <Car className="h-16 w-16 text-slate-600" />
-        <p className="text-sm text-slate-500">Sem fotos disponíveis</p>
+      <div className="aspect-[16/9] lg:aspect-[21/9] rounded-2xl bg-gray-50 flex flex-col items-center justify-center gap-3 border border-gray-200">
+        <Car className="h-16 w-16 text-gray-300" />
+        <p className="text-sm text-black font-medium">Imagens indisponíveis</p>
       </div>
     );
   }
@@ -112,10 +106,10 @@ function Galeria({ fotos, titulo }: { fotos: FotoVeiculo[]; titulo: string }) {
 
   return (
     <>
-      <div className="space-y-3">
-        {/* Foto principal */}
+      <div className="space-y-4">
+        {/* Foto Principal */}
         <div
-          className="relative aspect-[16/9] rounded-2xl overflow-hidden bg-slate-900 cursor-zoom-in group"
+          className="relative aspect-[16/9] lg:aspect-[21/9] rounded-2xl overflow-hidden bg-gray-100 cursor-zoom-in group shadow-sm border border-gray-100"
           onClick={() => setLightbox(true)}
         >
           <AnimatePresence mode="wait">
@@ -124,58 +118,56 @@ function Galeria({ fotos, titulo }: { fotos: FotoVeiculo[]; titulo: string }) {
               src={fotoAtual.url}
               alt={titulo}
               className="h-full w-full object-cover"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              initial={{ opacity: 0, scale: 1.02 }}
+              animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
+              transition={{ duration: 0.3 }}
             />
           </AnimatePresence>
 
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/60 to-transparent" />
+          {/* Gradientes e Controles */}
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
           {fotos.length > 1 && (
             <>
               <button
                 onClick={(e) => { e.stopPropagation(); ir(-1); }}
-                className="absolute left-3 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 backdrop-blur-sm transition-all hover:bg-black/70"
+                className="absolute left-4 top-1/2 -translate-y-1/2 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-white/20 hover:bg-white/40 text-white backdrop-blur-md transition-all z-10 opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0"
               >
-                <ChevronLeft className="h-5 w-5" />
+                <ChevronLeft className="h-6 w-6" />
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); ir(1); }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 backdrop-blur-sm transition-all hover:bg-black/70"
+                className="absolute right-4 top-1/2 -translate-y-1/2 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-white/20 hover:bg-white/40 text-white backdrop-blur-md transition-all z-10 opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0"
               >
-                <ChevronRight className="h-5 w-5" />
+                <ChevronRight className="h-6 w-6" />
               </button>
             </>
           )}
 
-          {/* Contador e hint */}
-          <div className="absolute bottom-3 left-3 flex items-center gap-2">
-            <span className="flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-sm">
+          {/* Badges Flutuantes */}
+          <div className="absolute bottom-4 left-4 flex items-center gap-2 z-10">
+            <span className="flex items-center gap-1.5 rounded-lg bg-black/40 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-md border border-white/10">
               <Camera className="h-3.5 w-3.5" />
               {idx + 1} / {fotos.length}
             </span>
           </div>
-          <span className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1.5 text-xs text-white/80 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity">
-            <Zap className="h-3 w-3" /> Clique para ampliar
-          </span>
         </div>
 
         {/* Thumbnails */}
         {fotos.length > 1 && (
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          <div className="flex gap-3 overflow-x-auto pb-2 pt-1 scrollbar-hide snap-x">
             {fotos.map((f, i) => (
               <button
-                key={f.id}
+                key={f.id || i}
                 onClick={() => setIdx(i)}
-                className={`relative flex-shrink-0 w-20 h-14 rounded-xl overflow-hidden border-2 transition-all ${
-                  i === idx ? "border-orange-500 shadow-md shadow-orange-200" : "border-transparent hover:border-orange-300"
+                className={`relative flex-shrink-0 w-24 h-16 sm:w-32 sm:h-20 rounded-xl overflow-hidden snap-start transition-all duration-300 ${
+                  i === idx ? "ring-2 ring-blue-600 ring-offset-2 opacity-100" : "opacity-60 hover:opacity-100"
                 }`}
               >
                 <img src={f.url} alt={`Foto ${i + 1}`} className="h-full w-full object-cover" />
                 {f.principal && (
-                  <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-orange-500 border border-white" />
+                  <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-blue-500 border border-white" />
                 )}
               </button>
             ))}
@@ -183,24 +175,24 @@ function Galeria({ fotos, titulo }: { fotos: FotoVeiculo[]; titulo: string }) {
         )}
       </div>
 
-      {/* Lightbox */}
+      {/* Lightbox Premium */}
       <AnimatePresence>
         {lightbox && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/98 backdrop-blur-xl flex items-center justify-center"
             onClick={() => setLightbox(false)}
           >
+            <div className="absolute top-0 inset-x-0 h-24 bg-gradient-to-b from-black/80 to-transparent pointer-events-none" />
+            
             <button
               onClick={() => setLightbox(false)}
-              className="absolute top-4 right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition"
+              className="absolute top-6 right-6 z-20 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors backdrop-blur-md"
             >
-              <X className="h-5 w-5" />
+              <X className="h-6 w-6" />
             </button>
 
-            <span className="absolute top-4 left-1/2 -translate-x-1/2 text-white/60 text-sm">
+            <span className="absolute top-8 left-1/2 -translate-x-1/2 text-white font-medium tracking-widest text-sm z-20">
               {idx + 1} / {fotos.length}
             </span>
 
@@ -208,15 +200,15 @@ function Galeria({ fotos, titulo }: { fotos: FotoVeiculo[]; titulo: string }) {
               <>
                 <button
                   onClick={(e) => { e.stopPropagation(); ir(-1); }}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition"
+                  className="absolute left-6 top-1/2 -translate-y-1/2 flex h-14 w-14 items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white backdrop-blur-md transition-all z-20"
                 >
-                  <ChevronLeft className="h-6 w-6" />
+                  <ChevronLeft className="h-8 w-8" />
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); ir(1); }}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition"
+                  className="absolute right-6 top-1/2 -translate-y-1/2 flex h-14 w-14 items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white backdrop-blur-md transition-all z-20"
                 >
-                  <ChevronRight className="h-6 w-6" />
+                  <ChevronRight className="h-8 w-8" />
                 </button>
               </>
             )}
@@ -226,29 +218,14 @@ function Galeria({ fotos, titulo }: { fotos: FotoVeiculo[]; titulo: string }) {
                 key={fotoAtual.url}
                 src={fotoAtual.url}
                 alt={titulo}
-                className="max-h-[85vh] max-w-[90vw] object-contain rounded-xl select-none"
-                initial={{ opacity: 0, scale: 0.95 }}
+                className="max-h-[90vh] max-w-[90vw] object-contain select-none"
+                initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
+                exit={{ opacity: 0, scale: 0.98 }}
                 transition={{ duration: 0.2 }}
                 onClick={(e) => e.stopPropagation()}
               />
             </AnimatePresence>
-
-            {/* Thumbnails no lightbox */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 max-w-[90vw] overflow-x-auto px-2 pb-1">
-              {fotos.map((f, i) => (
-                <button
-                  key={f.id}
-                  onClick={(e) => { e.stopPropagation(); setIdx(i); }}
-                  className={`flex-shrink-0 w-12 h-8 rounded-lg overflow-hidden border-2 transition-all ${
-                    i === idx ? "border-orange-500" : "border-white/20 hover:border-white/50"
-                  }`}
-                >
-                  <img src={f.url} alt="" className="h-full w-full object-cover" />
-                </button>
-              ))}
-            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -256,34 +233,38 @@ function Galeria({ fotos, titulo }: { fotos: FotoVeiculo[]; titulo: string }) {
   );
 }
 
-// ─── Navbar simples ────────────────────────────────────────────────────────────
+// ─── NAVBAR ──────────────────────────────────────────────────────────────────
 
 function Navbar() {
   const router = useRouter();
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+    <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-gray-200/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-20">
           <button
             onClick={() => router.push("/externo")}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+            className="flex items-center gap-2 text-black hover:text-black transition-colors group font-medium text-sm"
           >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="text-sm font-medium">Voltar ao catálogo</span>
+            <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+            <span className="hidden sm:inline">Voltar ao catálogo</span>
           </button>
 
           <a href="/externo" className="flex items-center gap-2">
-            <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 shadow-md">
-              <Car className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-base font-bold text-gray-900 hidden sm:block">AutoStore</span>
+            <img
+              src="/logo-232motors.png"
+              alt="232 Motors"
+              className="w-11 h-11 object-contain mix-blend-multiply"
+            />
+            <span className="text-xl font-extrabold text-black tracking-tight hidden sm:block">
+              232<span className="text-blue-600">MOTORS</span>
+            </span>
           </a>
 
           <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => router.push("/login")}
-            className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white text-sm font-semibold px-4 py-2 rounded-xl shadow transition-all"
+            className="flex items-center gap-2 bg-gray-900 hover:bg-black text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all"
           >
             <LogIn className="w-4 h-4" />
             <span className="hidden sm:inline">Entrar</span>
@@ -294,25 +275,22 @@ function Navbar() {
   );
 }
 
-// ─── Skeleton ──────────────────────────────────────────────────────────────────
+// ─── SKELETON ──────────────────────────────────────────────────────────────────
 
 function PageSkeleton() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50/50">
       <Navbar />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-4">
-            <div className="aspect-[16/9] bg-gray-200 rounded-2xl animate-pulse" />
-            <div className="flex gap-2">
-              {[...Array(4)].map((_, i) => <div key={i} className="w-20 h-14 bg-gray-200 rounded-xl animate-pulse" />)}
-            </div>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-pulse">
+        <div className="h-6 bg-gray-200 rounded w-1/4 mb-8" />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+          <div className="lg:col-span-8 space-y-4">
+            <div className="aspect-[21/9] bg-gray-200 rounded-2xl" />
+            <div className="flex gap-3"><div className="w-32 h-20 bg-gray-200 rounded-xl" /><div className="w-32 h-20 bg-gray-200 rounded-xl" /></div>
           </div>
-          <div className="space-y-4">
-            <div className="h-8 bg-gray-200 rounded-full animate-pulse w-3/4" />
-            <div className="h-4 bg-gray-100 rounded-full animate-pulse w-1/2" />
-            <div className="h-32 bg-gray-200 rounded-2xl animate-pulse" />
-            <div className="h-32 bg-gray-200 rounded-2xl animate-pulse" />
+          <div className="lg:col-span-4 space-y-6">
+            <div className="h-40 bg-gray-200 rounded-2xl" />
+            <div className="h-60 bg-gray-200 rounded-2xl" />
           </div>
         </div>
       </main>
@@ -320,7 +298,7 @@ function PageSkeleton() {
   );
 }
 
-// ─── Página de Detalhe ─────────────────────────────────────────────────────────
+// ─── PÁGINA PRINCIPAL ────────────────────────────────────────────────────────
 
 export default function VeiculoDetalhePublico() {
   const { id } = useParams<{ id: string }>();
@@ -351,24 +329,28 @@ export default function VeiculoDetalhePublico() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  if (loading) return <PageSkeleton />;
+  if (loading) {
+    return <PageSkeleton />;
+  }
 
   if (erro || !veiculo) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <Navbar />
-        <div className="flex-1 flex flex-col items-center justify-center gap-4 py-20 text-center px-4">
-          <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center">
-            <ImageOff className="w-10 h-10 text-gray-400" />
+        <div className="flex-1 flex flex-col items-center justify-center gap-5 py-20 text-center px-4">
+          <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center">
+            <ImageOff className="w-10 h-10 text-black" />
           </div>
-          <h2 className="text-xl font-bold text-gray-800">{erro || "Veículo não encontrado"}</h2>
-          <p className="text-sm text-gray-500 max-w-xs">O veículo solicitado pode ter sido removido ou está indisponível.</p>
+          <div>
+            <h2 className="text-2xl font-bold text-black mb-2">{erro || "Veículo não encontrado"}</h2>
+            <p className="text-black max-w-sm mx-auto">O veículo solicitado pode ter sido removido ou está indisponível.</p>
+          </div>
           <motion.button
             whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
             onClick={() => router.push("/externo")}
-            className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-600 text-white px-5 py-2.5 rounded-xl font-semibold shadow"
+            className="flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-xl font-semibold mt-4 hover:bg-black transition"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-5 h-5" />
             Voltar ao catálogo
           </motion.button>
         </div>
@@ -390,235 +372,231 @@ export default function VeiculoDetalhePublico() {
     { key: "revisado", label: "Revisado" },
   ] as const;
 
-  const opcionaisAtivos = opcionais.filter((o) => (veiculo as Record<string, unknown>)[o.key]);
+  const opcionaisAtivos = opcionais.filter((o) => (veiculo as unknown as Record<string, unknown>)[o.key]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-[#F8F9FA] flex flex-col font-sans text-black">
       <Navbar />
 
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
-        {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-sm text-gray-500 mb-6">
-          <a href="/externo" className="hover:text-orange-600 transition-colors">Catálogo</a>
-          <span>/</span>
-          <span className="text-gray-800 font-medium truncate">{titulo}</span>
-        </nav>
+      {/* ── Banner Hero com capa da loja — limpo, sem texto ── */}
+      <div className="relative h-56 sm:h-72 overflow-hidden">
+        <img
+          src="/loja-capa.png"
+          alt="Fachada 232 Motors"
+          className="absolute inset-0 w-full h-full object-cover object-[75%_12%]"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/30" />
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* ── Coluna esquerda: Galeria + Detalhes técnicos ────────── */}
-          <div className="lg:col-span-2 space-y-6">
-            <Galeria fotos={fotos} titulo={titulo} />
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
 
-            {/* Descrição */}
-            {veiculo.descricao && (
-              <SectionCard icon={Info} title="Descrição">
-                <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{veiculo.descricao}</p>
-              </SectionCard>
-            )}
-
-            {/* Ficha técnica */}
-            <SectionCard icon={Tag} title="Ficha Técnica">
-              <InfoRow label="Marca" value={veiculo.marca} />
-              <InfoRow label="Modelo" value={veiculo.modelo} />
-              {veiculo.versao && <InfoRow label="Versão" value={veiculo.versao} />}
-              <InfoRow label="Ano Fabricação" value={veiculo.anoFabricacao} />
-              <InfoRow label="Ano Modelo" value={veiculo.anoModelo} />
-              <InfoRow label="Cor" value={veiculo.cor} />
-              {veiculo.categoria && <InfoRow label="Categoria" value={veiculo.categoria} />}
-              {veiculo.portas && <InfoRow label="Portas" value={veiculo.portas} />}
-            </SectionCard>
-
-            {/* Motor e desempenho */}
-            {(veiculo.combustivel || veiculo.cambio || veiculo.motor || veiculo.potencia) && (
-              <SectionCard icon={Fuel} title="Motor e Desempenho">
-                {veiculo.combustivel && <InfoRow label="Combustível" value={combustivelLabel(veiculo.combustivel as string)} />}
-                {veiculo.cambio && <InfoRow label="Câmbio" value={cambioLabel(veiculo.cambio as string)} />}
-                {veiculo.motor && <InfoRow label="Motor" value={veiculo.motor} />}
-                {veiculo.potencia && <InfoRow label="Potência" value={veiculo.potencia} />}
-                {veiculo.quilometragem > 0 && <InfoRow label="Quilometragem" value={formatKm(veiculo.quilometragem)} />}
-              </SectionCard>
-            )}
-
-            {/* Opcionais */}
-            {opcionaisAtivos.length > 0 && (
-              <SectionCard icon={Shield} title="Opcionais e Diferenciais">
-                <div className="flex flex-wrap gap-2">
-                  {opcionaisAtivos.map((o) => (
-                    <span key={o.key} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-green-50 border border-green-200 text-sm font-medium text-green-800">
-                      <Zap className="w-3.5 h-3.5 text-green-600" />
-                      {o.label}
-                    </span>
-                  ))}
-                </div>
-              </SectionCard>
-            )}
+        {/* Breadcrumb + título + ações — abaixo da capa, no fundo claro */}
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
+          <div>
+            <nav className="flex items-center gap-2 text-sm text-black font-medium mb-2">
+              <a href="/externo" className="hover:text-black transition-colors">Catálogo</a>
+              <span>/</span>
+              <span className="hover:text-black transition-colors">{veiculo.marca}</span>
+              <span>/</span>
+              <span className="text-black truncate">{veiculo.modelo}</span>
+            </nav>
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-black tracking-tight">
+                {titulo}
+              </h1>
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border ${badge.cls}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
+                {badge.label}
+              </span>
+              {veiculo.destaque && (
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-700 border border-amber-200">
+                  <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+                  Destaque
+                </span>
+              )}
+            </div>
           </div>
 
-          {/* ── Coluna direita: Preço + Contato ─────────────────────── */}
-          <div className="space-y-4">
-            {/* Card principal */}
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 sticky top-24">
-              {/* Status + Destaque */}
-              <div className="flex items-center gap-2 mb-3">
-                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${badge.cls}`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
-                  {badge.label}
-                </span>
-                {veiculo.destaque && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
-                    <Star className="w-3 h-3 fill-current" />
-                    Destaque
-                  </span>
-                )}
-              </div>
-
-              {/* Título */}
-              <h1 className="text-2xl font-extrabold text-gray-900 leading-tight">{titulo}</h1>
-              {veiculo.versao && (
-                <p className="text-sm text-gray-500 mt-0.5">{veiculo.versao}</p>
-              )}
-
-              {/* Ano/Km */}
-              <div className="flex flex-wrap gap-3 mt-3">
-                <span className="flex items-center gap-1.5 text-sm text-gray-600">
-                  <Calendar className="w-4 h-4 text-gray-400" />
-                  {veiculo.anoFabricacao}/{veiculo.anoModelo}
-                </span>
-                {veiculo.quilometragem > 0 && (
-                  <span className="flex items-center gap-1.5 text-sm text-gray-600">
-                    <Gauge className="w-4 h-4 text-gray-400" />
-                    {formatKm(veiculo.quilometragem)}
-                  </span>
-                )}
-                {veiculo.combustivel && (
-                  <span className="flex items-center gap-1.5 text-sm text-gray-600">
-                    <Fuel className="w-4 h-4 text-gray-400" />
-                    {combustivelLabel(veiculo.combustivel as string)}
-                  </span>
-                )}
-                {veiculo.cambio && (
-                  <span className="flex items-center gap-1.5 text-sm text-gray-600">
-                    <Settings2 className="w-4 h-4 text-gray-400" />
-                    {cambioLabel(veiculo.cambio as string)}
-                  </span>
-                )}
-                {(veiculo.cidade || veiculo.estado) && (
-                  <span className="flex items-center gap-1.5 text-sm text-gray-600">
-                    <MapPin className="w-4 h-4 text-gray-400" />
-                    {[veiculo.cidade, veiculo.estado].filter(Boolean).join(" - ")}
-                  </span>
-                )}
-              </div>
-
-              {/* Preço */}
-              <div className="mt-5 pt-4 border-t border-gray-100">
-                {veiculo.valor > 0 ? (
-                  <>
-                    <p className="text-3xl font-extrabold text-orange-600">{formatBRL(veiculo.valor)}</p>
-                    {veiculo.valorFipe && (
-                      <p className="text-xs text-gray-400 mt-0.5">Tabela FIPE: {formatBRL(veiculo.valorFipe)}</p>
-                    )}
-                  </>
-                ) : (
-                  <p className="text-lg font-semibold text-gray-500">Consulte o valor</p>
-                )}
-              </div>
-
-              {/* Botões de ação */}
-              <div className="mt-4 space-y-3">
-                {isDisponivel ? (
-                  <>
-                    <motion.a
-                      whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                      href="#contato-footer"
-                      className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-bold py-3.5 px-6 rounded-xl shadow-md hover:shadow-orange-200 transition-all"
-                    >
-                      <Phone className="w-4 h-4" />
-                      Tenho Interesse
-                    </motion.a>
-                    <motion.button
-                      whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                      onClick={() => router.push("/login")}
-                      className="flex items-center justify-center gap-2 w-full bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold py-3 px-6 rounded-xl transition-all text-sm"
-                    >
-                      <LogIn className="w-4 h-4" />
-                      Entrar para negociar
-                    </motion.button>
-                  </>
-                ) : (
-                  <div className="flex flex-col items-center gap-2 p-4 bg-gray-50 rounded-xl border border-gray-200 text-center">
-                    <p className="text-sm font-semibold text-gray-700">Este veículo não está disponível</p>
-                    <p className="text-xs text-gray-500">Status: {STATUS_LABELS[veiculo.status] ?? veiculo.status}</p>
-                    <motion.button
-                      whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                      onClick={() => router.push("/externo")}
-                      className="mt-1 text-sm font-semibold text-orange-600 hover:text-orange-700 flex items-center gap-1"
-                    >
-                      <ArrowLeft className="w-3.5 h-3.5" /> Ver outros veículos
-                    </motion.button>
-                  </div>
-                )}
-              </div>
-
-              {/* Fotos info */}
-              {fotos.length > 0 && (
-                <p className="mt-3 flex items-center gap-1.5 text-xs text-gray-400 justify-center">
-                  <Camera className="w-3.5 h-3.5" />
-                  {fotos.length} foto{fotos.length !== 1 ? "s" : ""} disponíve{fotos.length !== 1 ? "is" : "l"}
-                </p>
-              )}
-            </div>
-
-            {/* Contato */}
-            <div id="contato-footer" className="bg-gradient-to-br from-orange-50 to-red-50 rounded-2xl border border-orange-200 p-5">
-              <h3 className="font-bold text-gray-900 text-sm mb-3 flex items-center gap-2">
-                <Phone className="w-4 h-4 text-orange-600" />
-                Entre em Contato
-              </h3>
-              <div className="space-y-2 text-sm text-gray-700">
-                <div className="flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-orange-500 flex-shrink-0" />
-                  <span>(XX) XXXXX-XXXX</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-orange-500 flex-shrink-0" />
-                  <span>Sua cidade, Brasil</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Cor */}
-            {veiculo.cor && (
-              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex items-center gap-3">
-                <div
-                  className="w-10 h-10 rounded-xl border border-gray-200 shadow-inner flex-shrink-0"
-                  style={{ backgroundColor: veiculo.cor.toLowerCase() }}
-                />
-                <div>
-                  <p className="text-xs text-gray-500">Cor</p>
-                  <p className="text-sm font-semibold text-gray-800 capitalize">{veiculo.cor}</p>
-                </div>
-              </div>
-            )}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-black hover:bg-gray-50 transition-colors shadow-sm">
+              <Share2 className="w-4 h-4" /> Compartilhar
+            </button>
+            <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-black hover:bg-gray-50 transition-colors shadow-sm">
+              <Heart className="w-4 h-4" /> Salvar
+            </button>
           </div>
         </div>
 
-        {/* Fotos count - mobile footer */}
-        {fotos.length > 0 && (
-          <div className="lg:hidden mt-6 flex items-center justify-center gap-2 text-sm text-gray-500">
-            <Camera className="w-4 h-4" />
-            <span>{fotos.length} fotos disponíveis — role para ver a galeria</span>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
+          
+          {/* ── COLUNA ESQUERDA: FOTOS E INFORMAÇÕES ────────── */}
+          <div className="lg:col-span-8 space-y-10">
+            
+            {/* Galeria */}
+            <section>
+              <Galeria fotos={fotos} titulo={titulo} />
+            </section>
+
+            {/* Resumo Rápido (Features Principais) */}
+            <div className="flex flex-wrap gap-4 py-6 border-y border-gray-200/60">
+               {[
+                 { icon: Calendar, label: "Ano", val: `${veiculo.anoFabricacao}/${veiculo.anoModelo}` },
+                 { icon: Gauge, label: "Quilometragem", val: veiculo.quilometragem > 0 ? formatKm(veiculo.quilometragem) : null },
+                 { icon: Settings2, label: "Câmbio", val: veiculo.cambio ? cambioLabel(veiculo.cambio as string) : null },
+                 { icon: Fuel, label: "Combustível", val: veiculo.combustivel ? combustivelLabel(veiculo.combustivel as string) : null },
+               ].map((item, i) => item.val && (
+                 <div key={i} className="flex items-center gap-3 pr-6 border-r border-gray-200/60 last:border-0 last:pr-0">
+                    <div className="p-2.5 bg-white rounded-xl shadow-sm border border-gray-100 text-black">
+                      <item.icon className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-bold text-black uppercase tracking-wider">{item.label}</p>
+                      <p className="text-sm font-bold text-black">{item.val}</p>
+                    </div>
+                 </div>
+               ))}
+            </div>
+
+            {/* Descrição do Veículo */}
+            {veiculo.descricao && (
+              <section className="space-y-4">
+                <h3 className="text-xl font-bold text-black flex items-center gap-2">
+                  Sobre o Veículo
+                </h3>
+                <div className="bg-white rounded-2xl p-6 lg:p-8 border border-gray-100 shadow-sm">
+                  <p className="text-base text-black leading-relaxed whitespace-pre-line">
+                    {veiculo.descricao}
+                  </p>
+                </div>
+              </section>
+            )}
+
+            {/* Especificações Técnicas (Grid Moderno) */}
+            <section className="space-y-4">
+              <h3 className="text-xl font-bold text-black">Especificações</h3>
+              <div className="bg-white rounded-2xl p-6 lg:p-8 border border-gray-100 shadow-sm grid grid-cols-2 md:grid-cols-3 gap-4">
+                <SpecCard icon={Tag} label="Marca" value={veiculo.marca} />
+                <SpecCard icon={Car} label="Modelo" value={veiculo.modelo} />
+                <SpecCard icon={Info} label="Versão" value={veiculo.versao} />
+                <SpecCard icon={Palette} label="Cor" value={veiculo.cor} />
+                <SpecCard icon={Zap} label="Motor" value={veiculo.motor} />
+                <SpecCard icon={Settings2} label="Potência" value={veiculo.potencia} />
+                <SpecCard icon={DoorOpen} label="Portas" value={veiculo.portas} />
+                <SpecCard icon={MapPin} label="Localização" value={[veiculo.cidade, veiculo.estado].filter(Boolean).join(" - ")} />
+              </div>
+            </section>
+
+            {/* Opcionais e Destaques */}
+            {opcionaisAtivos.length > 0 && (
+              <section className="space-y-4">
+                <h3 className="text-xl font-bold text-black">Destaques e Opcionais</h3>
+                <div className="bg-white rounded-2xl p-6 lg:p-8 border border-gray-100 shadow-sm">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-6">
+                    {opcionaisAtivos.map((o) => (
+                      <div key={o.key} className="flex items-center gap-3">
+                        <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                        <span className="text-sm font-medium text-black">{o.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </section>
+            )}
           </div>
-        )}
+
+          {/* ── COLUNA DIREITA: PREÇO E AÇÕES (Sticky) ────────── */}
+          <div className="lg:col-span-4">
+            <div className="sticky top-28 space-y-6">
+              
+              {/* Card Principal de Preço */}
+              <div className="bg-white rounded-3xl p-6 lg:p-8 border border-gray-200 shadow-xl shadow-gray-200/40">
+
+                {veiculo.versao && (
+                  <div className="mb-4">
+                    <p className="text-sm text-black font-medium">{veiculo.versao}</p>
+                  </div>
+                )}
+
+                <div className="bg-gray-50 rounded-2xl p-5 mb-6 border border-gray-100">
+                  {veiculo.valor > 0 ? (
+                    <>
+                      <p className="text-sm font-bold text-black uppercase tracking-wider mb-1">Preço à vista</p>
+                      <p className="text-4xl font-black text-blue-600 tracking-tight">{formatBRL(veiculo.valor)}</p>
+                      {veiculo.valorFipe && (
+                        <p className="text-xs text-black mt-2 flex items-center gap-1 font-medium">
+                          <Info className="w-3.5 h-3.5" /> Ref. FIPE: {formatBRL(veiculo.valorFipe)}
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-xl font-bold text-black">Consulte o valor</p>
+                  )}
+                </div>
+
+                <div className="space-y-3">
+                  {isDisponivel ? (
+                    <>
+                      <motion.a
+                        href="#contato-footer"
+                        whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                        className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg shadow-blue-600/20 transition-all text-base"
+                      >
+                        <Phone className="w-5 h-5" />
+                        Tenho Interesse
+                      </motion.a>
+                      <motion.button
+                        whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                        onClick={() => router.push("/login")}
+                        className="w-full flex items-center justify-center gap-2 bg-white border-2 border-gray-200 hover:border-gray-900 hover:bg-gray-900 hover:text-white text-black font-bold py-3.5 px-6 rounded-xl transition-all text-sm"
+                      >
+                        <LogIn className="w-4 h-4" />
+                        Entrar para negociar
+                      </motion.button>
+                    </>
+                  ) : (
+                    <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 text-center">
+                      <p className="text-sm font-bold text-black mb-1">Veículo Indisponível</p>
+                      <p className="text-xs text-black">Status atual: {STATUS_LABELS[veiculo.status]}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Card de Contato Footer */}
+              <div id="contato-footer" className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl p-6 text-white shadow-lg">
+                <h4 className="font-bold mb-4 flex items-center gap-2">
+                  <Phone className="w-5 h-5 text-blue-400" />
+                  Fale Conosco
+                </h4>
+                <ul className="space-y-3 text-sm text-slate-300 font-medium">
+                  <li className="flex items-center gap-3">
+                    <div className="bg-white/10 p-2 rounded-lg"><Phone className="w-4 h-4 text-white" /></div>
+                    (XX) XXXXX-XXXX
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <div className="bg-white/10 p-2 rounded-lg"><MapPin className="w-4 h-4 text-white" /></div>
+                    Sua cidade, Brasil
+                  </li>
+                </ul>
+              </div>
+
+            </div>
+          </div>
+        </div>
       </main>
 
-      {/* Mini footer */}
-      <footer className="bg-gray-900 text-gray-400 py-6 mt-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs">
-          <span>© {new Date().getFullYear()} AutoStore. Todos os direitos reservados.</span>
-          <a href="/externo" className="hover:text-orange-400 transition-colors flex items-center gap-1">
-            <ArrowLeft className="w-3 h-3" /> Voltar ao catálogo
-          </a>
+      {/* Footer Minimalista */}
+      <footer className="bg-white border-t border-gray-200 mt-auto">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <img src="/logo-232motors.png" alt="232 Motors" className="w-10 h-10 object-contain mix-blend-multiply" />
+            <span className="text-xl font-extrabold text-black tracking-tight">
+              232<span className="text-blue-600">MOTORS</span>
+            </span>
+          </div>
+          <p className="text-sm text-black font-medium">
+            © {new Date().getFullYear()} 232 Motors. Todos os direitos reservados.
+          </p>
         </div>
       </footer>
     </div>
