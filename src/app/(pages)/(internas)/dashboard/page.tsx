@@ -1,14 +1,19 @@
 'use client';
 
-import DashboardModerno from '@/components/Dashboard/DashboardModerno';
-import AuthenticatedLayout from '@/components/Layouts/AuthenticatedLayout';
-import React from 'react';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 const Dashboard = () => {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace('/crm');
+  }, [router]);
+
   return (
-    <AuthenticatedLayout>
-      <DashboardModerno />
-    </AuthenticatedLayout>
+    <div className="flex h-screen items-center justify-center">
+      <p className="text-sm text-slate-400">Redirecionando para o dashboard...</p>
+    </div>
   );
 };
 

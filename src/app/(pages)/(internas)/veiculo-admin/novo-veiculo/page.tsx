@@ -18,6 +18,7 @@ import { useTheme } from "next-themes";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import { getUserLocalStorage } from "@/store/userLocalStorage";
 import axiosInstance from "@/services/axiosInstance";
+import { OPCIONAL_LABELS, OPCIONAL_OPTIONS } from "../_components/veiculo.utils";
 
 interface VeiculoRequestDTO {
   marca: string;
@@ -37,6 +38,7 @@ interface VeiculoRequestDTO {
   aceitaTroca: boolean;
   unicoDono: boolean;
   blindado: boolean;
+  opcionais: string[];
 }
 
 interface VeiculoResponseDTO extends VeiculoRequestDTO {
@@ -128,6 +130,7 @@ const CadastroVeiculo = () => {
     aceitaTroca: true,
     unicoDono: false,
     blindado: false,
+    opcionais: [],
   });
 
   const colors = {
@@ -203,6 +206,7 @@ const CadastroVeiculo = () => {
         aceitaTroca: veiculo.aceitaTroca ?? true,
         unicoDono: veiculo.unicoDono || false,
         blindado: veiculo.blindado || false,
+        opcionais: Array.isArray(veiculo.opcionais) ? veiculo.opcionais : [],
       });
     } catch (err) {
       console.error("Erro ao carregar veículo:", err);
@@ -227,6 +231,16 @@ const CadastroVeiculo = () => {
     setFormData(prev => ({
       ...prev,
       [name]: checked
+    }));
+    setError("");
+  };
+
+  const toggleOpcional = (opcional: string) => {
+    setFormData(prev => ({
+      ...prev,
+      opcionais: prev.opcionais.includes(opcional)
+        ? prev.opcionais.filter(o => o !== opcional)
+        : [...prev.opcionais, opcional],
     }));
     setError("");
   };
@@ -290,6 +304,7 @@ const CadastroVeiculo = () => {
           aceitaTroca: true,
           unicoDono: false,
           blindado: false,
+          opcionais: [],
         });
       }
 
@@ -811,6 +826,52 @@ const CadastroVeiculo = () => {
                       />
                       <span className={`text-sm font-medium ${colors.text.primary}`}>Único Dono</span>
                     </label>
+                  </div>
+                </div>
+
+                {/* Itens Opcionais */}
+                <div className="mb-8">
+                  <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2`}>
+                    <div className={`p-2 rounded-lg ${
+                      theme === 'dark' 
+                        ? 'bg-blue-500/15 ring-1 ring-blue-400/30' 
+                        : 'bg-blue-500/10 ring-1 ring-blue-400/20'
+                    }`}>
+                      <Check className={`h-4 w-4 ${
+                        theme === 'dark' ? 'text-blue-400' : 'text-blue-500'
+                      }`} />
+                    </div>
+                    Itens Opcionais
+                    <span className={`text-xs font-normal ${colors.text.muted}`}>
+                      ({formData.opcionais.length} selecionados)
+                    </span>
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {OPCIONAL_OPTIONS.map((opcional) => {
+                      const ativo = formData.opcionais.includes(opcional);
+                      return (
+                        <label
+                          key={opcional}
+                          className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                            ativo
+                              ? theme === 'dark'
+                                ? 'border-blue-500/50 bg-blue-500/10'
+                                : 'border-blue-400/50 bg-blue-50'
+                              : `${colors.input.border} ${colors.input.background}`
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={ativo}
+                            onChange={() => toggleOpcional(opcional)}
+                            className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className={`text-sm font-medium ${colors.text.primary}`}>
+                            {OPCIONAL_LABELS[opcional]}
+                          </span>
+                        </label>
+                      );
+                    })}
                   </div>
                 </div>
 

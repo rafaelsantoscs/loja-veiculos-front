@@ -13,12 +13,18 @@ import {
   ChevronDown,
   Sun,
   Moon,
-  ClipboardList,
   UserRound,
   ShieldCheck,
-  DoorOpen,
   LogOut,
   Car,
+  BarChart3,
+  Handshake,
+  DollarSign,
+  Wallet,
+  UserCog,
+  ClipboardCheck,
+  Eye,
+  FileText,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { clearUserLocalStorage } from "@/store/userLocalStorage";
@@ -42,7 +48,6 @@ interface SidebarProps {
   onToggle?: () => void;
 }
 
-// Componente do Botão de Tema
 function ThemeToggle({ size = "default" }: { size?: "default" | "small" }) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -103,7 +108,6 @@ export default function SidebarGamificada({ isOpen = true, onToggle }: SidebarPr
   const [collapsed, setCollapsed] = useState(!isOpen);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 
-  // Cores dinâmicas baseadas no tema
   const colors = {
     background: theme === 'dark' 
       ? 'bg-slate-900/95 backdrop-blur-md'
@@ -131,9 +135,9 @@ export default function SidebarGamificada({ isOpen = true, onToggle }: SidebarPr
   const sidebarItems: SidebarItem[] = [
     {
       title: 'Dashboard',
-      href: '/dashboard',
+      href: '/crm',
       icon: Home,
-      description: 'Visão geral do sistema'
+      description: 'Visão geral de vendas e leads'
     },
     {
       title: 'Veículos',
@@ -153,93 +157,51 @@ export default function SidebarGamificada({ isOpen = true, onToggle }: SidebarPr
       ]
     },
     {
-      title: 'Formulários',
-      href: '/formularios',
-      icon: ClipboardList,
-      description: 'Central de formulários'
-    },
-    {
-      title: 'Chamados',
-      icon: Building,
-      description: 'Sistema de chamados',
+      title: 'CRM',
+      icon: Handshake,
+      description: 'Gestão de vendas e leads',
       children: [
         {
-          title: 'Novo Chamado',
-          href: '/formularios/chamados',
-          description: 'Criar novo chamado'
+          title: 'Leads',
+          href: '/crm/leads',
+          description: 'Gerenciar contatos e propostas'
         },
         {
-          title: 'Listar Chamados',
-          href: '/formularios/chamados/listar-chamados',
-          description: 'Ver todos os chamados'
+          title: 'Relatórios',
+          href: '/crm/relatorios',
+          description: 'Análises, giro e precificação'
         }
       ]
     },
     {
-      title: 'Materiais',
-      icon: DoorOpen,
-      description: 'Controle de materiais',
+      title: 'Gestão',
+      icon: BarChart3,
+      description: 'Controle da loja',
       children: [
         {
-          title: 'Cadastrar Material',
-          href: '/formularios/materiais',
-          description: 'Adicionar novo material'
+          title: 'Vendas',
+          href: '/gestao/vendas',
+          description: 'Registro de vendas'
         },
         {
-          title: 'Listar Materiais',
-          href: '/formularios/materiais/listar-materiais',
-          description: 'Ver todos os materiais'
-        }
-      ]
-    },
-    {
-      title: 'Manutenção',
-      icon: Settings,
-      description: 'Ordem de serviços',
-      children: [
-        {
-          title: 'Nova OS',
-          href: '/formularios/manutencao',
-          description: 'Criar ordem de serviço'
+          title: 'Vendedores',
+          href: '/gestao/vendedores',
+          description: 'Equipe e comissões'
         },
         {
-          title: 'OS Abertas',
-          href: '/formularios/manutencao/abertas',
-          description: 'Ver ordens abertas'
-        }
-      ]
-    },
-    {
-      title: 'Tarefas',
-      icon: ClipboardList,
-      description: 'Gerenciar tarefas',
-      children: [
-        {
-          title: 'Minhas Tarefas',
-          href: '/formularios/tarefas',
-          description: 'Ver tarefas atribuídas'
+          title: 'Despesas',
+          href: '/gestao/despesas',
+          description: 'Controle de gastos'
         },
         {
-          title: 'Gerenciar Tarefas',
-          href: '/formularios/tarefas/gerenciar',
-          description: 'Criar e atribuir tarefas'
-        }
-      ]
-    },
-    {
-      title: 'Unidades',
-      icon: Building,
-      description: 'Gerenciar unidades',
-      children: [
-        {
-          title: 'Cadastrar Unidade',
-          href: '/formularios/cadastrar-unidade',
-          description: 'Adicionar nova unidade'
+          title: 'Fluxo de Caixa',
+          href: '/gestao/fluxo-caixa',
+          description: 'Entradas e saídas'
         },
         {
-          title: 'Listar Unidades',
-          href: '/formularios/cadastrar-unidade/listar-unidades',
-          description: 'Ver todas as unidades'
+          title: 'Avaliações',
+          href: '/gestao/avaliacoes',
+          description: 'Avaliação de usados'
         }
       ]
     },
@@ -326,7 +288,6 @@ export default function SidebarGamificada({ isOpen = true, onToggle }: SidebarPr
         collapsed ? 'w-20' : 'w-80'
       } ${colors.background} ${colors.border} border-r transition-all duration-300 z-40`}>
         <div className="flex flex-col h-full">
-          {/* Header Skeleton */}
           <div className="p-4 border-b border-slate-700/30">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-slate-700/30 rounded-xl animate-pulse" />
@@ -339,7 +300,6 @@ export default function SidebarGamificada({ isOpen = true, onToggle }: SidebarPr
             </div>
           </div>
           
-          {/* Menu Items Skeleton */}
           <div className="flex-1 p-4 space-y-2">
             {[...Array(6)].map((_, i) => (
               <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-slate-700/30 animate-pulse">
@@ -355,7 +315,6 @@ export default function SidebarGamificada({ isOpen = true, onToggle }: SidebarPr
 
   return (
     <>
-      {/* Overlay para mobile */}
       <AnimatePresence>
         {!collapsed && (
           <motion.div
@@ -368,7 +327,6 @@ export default function SidebarGamificada({ isOpen = true, onToggle }: SidebarPr
         )}
       </AnimatePresence>
 
-      {/* Sidebar */}
       <motion.div
         initial={false}
         animate={{ 
@@ -391,7 +349,7 @@ export default function SidebarGamificada({ isOpen = true, onToggle }: SidebarPr
                       : 'bg-blue-500/15 ring-1 ring-blue-400/20'
                   } ${collapsed ? 'w-10 h-10' : 'w-12 h-12'}`}
                 >
-                  <Building className={collapsed ? "w-5 h-5" : "w-6 h-6"} />
+                  <Car className={collapsed ? "w-5 h-5" : "w-6 h-6"} />
                 </motion.div>
                 
                 <AnimatePresence>
@@ -403,17 +361,16 @@ export default function SidebarGamificada({ isOpen = true, onToggle }: SidebarPr
                       className="flex-1 min-w-0"
                     >
                       <h1 className="font-bold text-lg leading-tight truncate">
-                        Sistema CTIC
+                        Loja de Veículos
                       </h1>
                       <p className="text-xs text-slate-400 truncate">
-                        Gestão de TI • v2.0
+                        Sistema de Gestão • v2.0
                       </p>
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
 
-              {/* Botão Toggle */}
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
@@ -422,7 +379,7 @@ export default function SidebarGamificada({ isOpen = true, onToggle }: SidebarPr
                   theme === 'dark' 
                     ? 'bg-slate-800/60 hover:bg-slate-700/60 text-slate-400' 
                     : 'bg-slate-200/60 hover:bg-slate-300/60 text-slate-600'
-                } transition-colors ${collapsed ? 'w-8 h-8' : 'w-8 h-8'}`}
+                } transition-colors w-8 h-8`}
               >
                 {collapsed ? (
                   <ChevronRight className="w-4 h-4" />
@@ -433,9 +390,8 @@ export default function SidebarGamificada({ isOpen = true, onToggle }: SidebarPr
             </div>
           </div>
 
-          {/* Conteúdo da Sidebar */}
+          {/* Menu */}
           <div className="flex-1 overflow-y-auto">
-            {/* Seção Principal */}
             <div className="p-4">
               <AnimatePresence>
                 {!collapsed && (
@@ -469,9 +425,7 @@ export default function SidebarGamificada({ isOpen = true, onToggle }: SidebarPr
                           : `${colors.border} ${colors.hover} ${colors.text.secondary}`
                       } ${collapsed ? 'justify-center' : ''}`}
                     >
-                      <item.icon className={`flex-shrink-0 ${
-                        collapsed ? "w-5 h-5" : "w-5 h-5"
-                      } ${isItemActive(item) ? 'text-current' : ''}`} />
+                      <item.icon className="flex-shrink-0 w-5 h-5" />
                       
                       <AnimatePresence>
                         {!collapsed && (
@@ -503,7 +457,6 @@ export default function SidebarGamificada({ isOpen = true, onToggle }: SidebarPr
                       </AnimatePresence>
                     </motion.button>
 
-                    {/* Submenu */}
                     <AnimatePresence>
                       {!collapsed && item.children && expandedItems.has(item.title) && (
                         <motion.div
@@ -554,7 +507,7 @@ export default function SidebarGamificada({ isOpen = true, onToggle }: SidebarPr
               <div className={`h-px ${theme === 'dark' ? 'bg-slate-800/60' : 'bg-slate-200/60'}`} />
             </div>
 
-            {/* Seção Administração */}
+            {/* Administração */}
             <div className="p-4">
               <AnimatePresence>
                 {!collapsed && (
@@ -585,9 +538,7 @@ export default function SidebarGamificada({ isOpen = true, onToggle }: SidebarPr
                         : `${colors.border} ${colors.hover} ${colors.text.secondary}`
                     } ${collapsed ? 'justify-center' : ''}`}
                   >
-                    <item.icon className={`flex-shrink-0 ${
-                      collapsed ? "w-5 h-5" : "w-5 h-5"
-                    } ${isActive(item.href) ? 'text-current' : ''}`} />
+                    <item.icon className="flex-shrink-0 w-5 h-5" />
                     
                     <AnimatePresence>
                       {!collapsed && (
@@ -637,7 +588,6 @@ export default function SidebarGamificada({ isOpen = true, onToggle }: SidebarPr
                 )}
               </AnimatePresence>
 
-              {/* Botão de Logout */}
               <motion.button
                 onClick={handleLogout}
                 whileHover={{ scale: 1.05 }}
@@ -668,7 +618,6 @@ export default function SidebarGamificada({ isOpen = true, onToggle }: SidebarPr
         </div>
       </motion.div>
 
-      {/* Botão para abrir sidebar em mobile quando colapsada */}
       {collapsed && (
         <motion.button
           initial={{ opacity: 0, scale: 0.8 }}

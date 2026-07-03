@@ -73,6 +73,38 @@ export const CAMBIO_LABELS: Record<string, string> = {
   AUTOMATIZADO: "Automatizado",
 };
 
+export const OPCIONAL_LABELS: Record<string, string> = {
+  AR_CONDICIONADO: "Ar-condicionado",
+  DIRECAO_HIDRAULICA: "Direção hidráulica",
+  DIRECAO_ELETRICA: "Direção elétrica",
+  VIDRO_ELETRICO: "Vidros elétricos",
+  TRAVA_ELETRICA: "Travas elétricas",
+  AIRBAG: "Airbag",
+  FREIO_ABS: "Freios ABS",
+  CAMERA_RE: "Câmera de ré",
+  SENSOR_ESTACIONAMENTO: "Sensor de estacionamento",
+  CENTRAL_MULTIMIDIA: "Central multimídia",
+  BANCO_COURO: "Bancos de couro",
+  TETO_SOLAR: "Teto solar",
+  RODAS_LIGA_LEVE: "Rodas de liga leve",
+  PILOTO_AUTOMATICO: "Piloto automático",
+  CONTROLE_TRACAO: "Controle de tração",
+  START_STOP: "Start/Stop",
+  FAROL_LED: "Faróis de LED",
+  COMPUTADOR_BORDO: "Computador de bordo",
+  BLUETOOTH: "Bluetooth",
+  GPS: "GPS",
+  ALARME: "Alarme",
+  ENGATE_REBOQUE: "Engate para reboque",
+};
+
+export const OPCIONAL_OPTIONS = Object.keys(OPCIONAL_LABELS);
+
+export function opcionalLabel(value?: string): string {
+  if (!value) return "—";
+  return OPCIONAL_LABELS[value] ?? value;
+}
+
 export const CATEGORIA_OPTIONS = [
   "Hatch",
   "Sedã",
@@ -168,5 +200,7 @@ export function mapVeiculo(raw: any): Veiculo {
     fotoPrincipal: raw.fotoPrincipal ?? null,
     dataCadastro: raw.dataCadastro ?? raw.dataEntrada ?? undefined,
     dataAtualizacao: raw.dataAtualizacao ?? undefined,
+    visualizacoes: raw.visualizacoes ?? undefined,
+    opcionais: Array.isArray(raw.opcionais) ? raw.opcionais : [],
   };
 }

@@ -58,6 +58,31 @@ const STATUS_BADGE: Record<string, { label: string; cls: string; dot: string }> 
 function Navbar() {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [usuarioLogado, setUsuarioLogado] = useState<{ nomeCompleto?: string; username?: string } | null>(null);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = localStorage.getItem("user");
+      if (raw) {
+        const u = JSON.parse(raw);
+        if (u?.token) setUsuarioLogado(u);
+      }
+    } catch {
+      // localStorage indisponível
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    document.cookie = "userRoles=; path=/; max-age=0";
+    setUsuarioLogado(null);
+    setUserMenuOpen(false);
+    router.refresh();
+  };
+
+  const primeiroNome = usuarioLogado?.nomeCompleto?.split(" ")[0] ?? usuarioLogado?.username ?? "";
 
   return (
     <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-200/50">
@@ -81,21 +106,72 @@ function Navbar() {
 
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-black">
             <a href="#catalogo" className="hover:text-black transition-colors">Catálogo</a>
+            <a href="/avaliacao" className="text-blue-600 hover:text-blue-700 font-semibold transition-colors">Venda seu carro</a>
             <a href="#sobre" className="hover:text-black transition-colors">Sobre Nós</a>
             <a href="#contato" className="hover:text-black transition-colors">Contato</a>
           </nav>
 
           <div className="flex items-center gap-3">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => router.push("/login")}
-              className="hidden sm:flex items-center gap-2 bg-gray-900 hover:bg-black text-sm font-semibold px-5 py-2.5 rounded-xl transition-all"
-              style={{ color: "#ffffff" }}
-            >
-              <LogIn className="w-4 h-4" />
-              Entrar
-            </motion.button>
+            {usuarioLogado ? (
+              <div className="relative hidden sm:block">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setUserMenuOpen((v) => !v)}
+                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all"
+                >
+                  <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold">
+                    {primeiroNome.charAt(0).toUpperCase()}
+                  </div>
+                  Olá, {primeiroNome}
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </motion.button>
+
+                <AnimatePresence>
+                  {userMenuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 py-1 overflow-hidden"
+                    >
+                      <div className="px-4 py-3 border-b border-gray-100">
+                        <p className="text-xs text-gray-500">Logado como</p>
+                        <p className="text-sm font-semibold text-gray-900 truncate">{primeiroNome}</p>
+                      </div>
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                        <LogIn className="w-4 h-4 rotate-180" />
+                        Sair da conta
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : (
+              <div className="hidden sm:flex items-center gap-2">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => router.push("/register")}
+                  className="flex items-center gap-2 border border-gray-300 hover:border-gray-400 text-gray-700 hover:text-black text-sm font-semibold px-4 py-2.5 rounded-xl transition-all"
+                >
+                  Cadastrar
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => router.push("/login")}
+                  className="flex items-center gap-2 bg-gray-900 hover:bg-black text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all"
+                >
+                  <LogIn className="w-4 h-4" />
+                  Entrar
+                </motion.button>
+              </div>
+            )}
 
             <button
               onClick={() => setMenuOpen(!menuOpen)}
@@ -116,15 +192,36 @@ function Navbar() {
             >
               <nav className="py-3 flex flex-col gap-1 text-sm font-medium text-black">
                 <a href="#catalogo" onClick={() => setMenuOpen(false)} className="px-2 py-2 rounded-lg hover:bg-gray-50">Catálogo</a>
+                <a href="/avaliacao" onClick={() => setMenuOpen(false)} className="px-2 py-2 rounded-lg text-blue-600 font-semibold hover:bg-blue-50">Venda seu carro</a>
                 <a href="#sobre" onClick={() => setMenuOpen(false)} className="px-2 py-2 rounded-lg hover:bg-gray-50">Sobre Nós</a>
                 <a href="#contato" onClick={() => setMenuOpen(false)} className="px-2 py-2 rounded-lg hover:bg-gray-50">Contato</a>
-                <button
-                  onClick={() => router.push("/login")}
-                  className="flex items-center gap-2 mt-2 bg-gray-900 font-semibold px-4 py-2 rounded-xl hover:bg-black transition"
-                  style={{ color: "#ffffff" }}
-                >
-                  <LogIn className="w-4 h-4" /> Entrar na conta
-                </button>
+                {usuarioLogado ? (
+                  <>
+                    <div className="px-2 py-2 text-blue-700 font-semibold">Olá, {primeiroNome}</div>
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center gap-2 mt-1 border border-red-300 text-red-600 font-semibold px-4 py-2 rounded-xl hover:bg-red-50 transition"
+                    >
+                      <LogIn className="w-4 h-4 rotate-180" /> Sair da conta
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => router.push("/register")}
+                      className="flex items-center gap-2 mt-2 border border-gray-300 text-gray-700 font-semibold px-4 py-2 rounded-xl hover:bg-gray-50 transition"
+                    >
+                      Cadastrar
+                    </button>
+                    <button
+                      onClick={() => router.push("/login")}
+                      className="flex items-center gap-2 mt-2 bg-gray-900 font-semibold px-4 py-2 rounded-xl hover:bg-black transition"
+                      style={{ color: "#ffffff" }}
+                    >
+                      <LogIn className="w-4 h-4" /> Entrar na conta
+                    </button>
+                  </>
+                )}
               </nav>
             </motion.div>
           )}
