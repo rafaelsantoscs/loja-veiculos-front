@@ -22,6 +22,30 @@ export type Cambio =
   | "DCT"
   | "AUTOMATIZADO";
 
+export type OpcionalVeiculo =
+  | "AR_CONDICIONADO"
+  | "DIRECAO_HIDRAULICA"
+  | "DIRECAO_ELETRICA"
+  | "VIDRO_ELETRICO"
+  | "TRAVA_ELETRICA"
+  | "AIRBAG"
+  | "FREIO_ABS"
+  | "CAMERA_RE"
+  | "SENSOR_ESTACIONAMENTO"
+  | "CENTRAL_MULTIMIDIA"
+  | "BANCO_COURO"
+  | "TETO_SOLAR"
+  | "RODAS_LIGA_LEVE"
+  | "PILOTO_AUTOMATICO"
+  | "CONTROLE_TRACAO"
+  | "START_STOP"
+  | "FAROL_LED"
+  | "COMPUTADOR_BORDO"
+  | "BLUETOOTH"
+  | "GPS"
+  | "ALARME"
+  | "ENGATE_REBOQUE";
+
 export interface FotoVeiculo {
   id: number;
   url: string;
@@ -65,6 +89,8 @@ export interface Veiculo {
   fotoPrincipal?: string | null;
   dataCadastro?: string;
   dataAtualizacao?: string;
+  visualizacoes?: number;
+  opcionais?: OpcionalVeiculo[];
 }
 
 /** Filtros aplicáveis à listagem de veículos. */

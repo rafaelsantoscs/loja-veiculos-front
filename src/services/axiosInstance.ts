@@ -1,137 +1,147 @@
 import axios from 'axios';
-import {BASE_URL} from '@/config/config';
+import { BASE_URL } from '@/config/config';
 
 const axiosInstance = axios.create({
   baseURL: BASE_URL,
-  timeout: 30000, // Aumentado para 30 segundos
+  timeout: 30000,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
-    'Accept': 'application/json'
-  }
+    'Accept': 'application/json',
+  },
 });
 
+// ─── Helpers ────────────────────────────────────────────────────────────────────
 
-// Interceptor para adicionar o token de autenticação
+/** Páginas externas que não exigem autenticação */
+const PAGINAS_PUBLICAS = [
+  '/externo',
+  '/login',
+  '/register',
+  '/confirmar-email',
+  '/forgot-password',
+  '/redefinir-senha',
+  '/home',
+  '/institucional',
+  '/noticias',
+  '/faq',
+  '/termos',
+  '/privacy',
+  '/help',
+  '/avaliacao',
+];
+
+/** Rotas de API acessíveis sem autenticação */
+const API_PUBLICAS = [
+  '/auth/',
+  '/auth/google',
+  '/usuarios/salvar-usuario',
+  '/usuarios/confirmar-email',
+  '/usuarios/validar-email',
+  '/password/',
+  '/publicas',
+  '/faq',
+  '/veiculos',
+];
+
+function isContextoPublico(apiUrl?: string): boolean {
+  if (typeof window === 'undefined') return true;
+
+  const pathname = window.location.pathname;
+
+  // Está em uma página pública?
+  if (PAGINAS_PUBLICAS.some((p) => pathname.includes(p))) return true;
+
+  // É uma API pública?
+  if (apiUrl) {
+    if (API_PUBLICAS.some((p) => apiUrl.includes(p))) return true;
+    // Rota de veículo individual  /veiculos/123  ou  /veiculos/123/fotos
+    if (/^\/veiculos\//.test(apiUrl)) return true;
+  }
+
+  return false;
+}
+
+// ─── Interceptor de REQUEST ──────────────────────────────────────────────────────
+
 axiosInstance.interceptors.request.use(
   (config) => {
-    // Verificar se estamos no lado do cliente
-    if (typeof window !== 'undefined') {
-      // Buscar token do objeto user no localStorage
-      const userString = localStorage.getItem('user');
-      if (userString) {
-        try {
-          const user = JSON.parse(userString);
-          const token = user.token;
-          if (token) {
-            if (config.headers) {
-              config.headers['Authorization'] = `Bearer ${token}`;
-              config.headers['Content-Type'] = 'application/json';
-              config.headers['Accept'] = 'application/json';
-              config.headers['Access-Control-Allow-Credentials'] = 'true';
-            }
-          }
-        } catch (error) {
-          console.error('Erro ao parsear user do localStorage:', error);
-          // Só redireciona se não estiver em uma rota pública e não for rota de auth
-          const isPublicRoute = config.url?.includes('/publicas') || 
-                               config.url?.includes('/faq') ||
-                               config.url === '/veiculos' ||
-                               config.url?.match(/^\/veiculos\/\d+$/) !== null ||
-                               window.location.pathname.includes('/externo') ||
-                               window.location.pathname.includes('/institucional') ||
-                               window.location.pathname.includes('/noticias') ||
-                               window.location.pathname.includes('/faq');
-          
-          if (!config.url?.includes('/auth') && !isPublicRoute) {
-            window.location.href = '/externo';
-          }
+    if (typeof window === 'undefined') return config;
+
+    const userString = localStorage.getItem('user');
+
+    if (userString) {
+      try {
+        const user = JSON.parse(userString);
+        if (user?.token && config.headers) {
+          config.headers['Authorization'] = `Bearer ${user.token}`;
+          config.headers['Content-Type'] = 'application/json';
+          config.headers['Accept'] = 'application/json';
+          config.headers['Access-Control-Allow-Credentials'] = 'true';
         }
-      } else {
-        // Só redireciona se não estiver em uma rota pública e não for rota de auth
-        const isPublicRoute = config.url?.includes('/publicas') || 
-                             config.url?.includes('/faq') ||
-                             config.url === '/veiculos' ||
-                             config.url?.match(/^\/veiculos\/\d+$/) !== null ||
-                             window.location.pathname.includes('/externo') ||
-                             window.location.pathname.includes('/institucional') ||
-                             window.location.pathname.includes('/noticias') ||
-                             window.location.pathname.includes('/faq');
-        
-        if (!config.url?.includes('/auth') && !isPublicRoute) {
+      } catch {
+        console.error('Erro ao parsear user do localStorage');
+        localStorage.removeItem('user');
+        if (!isContextoPublico(config.url)) {
           window.location.href = '/externo';
         }
       }
+    } else {
+      // Sem sessão — só bloqueia rotas que exigem autenticação
+      if (!isContextoPublico(config.url)) {
+        window.location.href = '/externo';
+      }
     }
+
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error),
 );
 
-// Interceptor para lidar com respostas de erro
+// ─── Interceptor de RESPONSE ─────────────────────────────────────────────────────
+
 axiosInstance.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
   (error) => {
-    // Log detalhado do erro
     console.error('Erro na requisição:', {
       url: error.config?.url,
       method: error.config?.method,
       status: error.response?.status,
       data: error.response?.data,
-      headers: error.config?.headers
     });
 
-    // Tratamento específico por status
     if (error.response) {
       switch (error.response.status) {
         case 401:
-          // Unauthorized - Limpar dados e redirecionar para login apenas se não for rota pública
           if (typeof window !== 'undefined') {
             localStorage.removeItem('user');
             sessionStorage.removeItem('user');
-            
-            const isPublicRoute = error.config.url?.includes('/publicas') || 
-                                 error.config.url?.includes('/faq') ||
-                                 error.config.url === '/veiculos' ||
-                                 error.config.url?.match(/^\/veiculos\/\d+$/) !== null ||
-                                 window.location.pathname.includes('/externo') ||
-                                 window.location.pathname.includes('/institucional') ||
-                                 window.location.pathname.includes('/noticias') ||
-                                 window.location.pathname.includes('/faq');
-            
-            if (!error.config.url?.includes('/auth') && !isPublicRoute) {
+            document.cookie = 'userRoles=; path=/; max-age=0';
+
+            if (!isContextoPublico(error.config?.url)) {
               window.location.href = '/externo';
             }
           }
           break;
         case 403:
-          // Forbidden - Acesso negado
           console.error('Acesso negado. Verifique suas permissões.');
           break;
         case 404:
-          // Not Found
           console.error('Recurso não encontrado:', error.config?.url);
           break;
         case 422:
-          // Validation Error
           console.error('Erro de validação:', error.response.data);
           break;
         case 500:
-          // Server Error
           console.error('Erro interno do servidor');
           break;
       }
     } else if (error.request) {
-      // Erro de rede ou CORS
       console.error('Erro de rede ou CORS:', error.message);
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default axiosInstance;

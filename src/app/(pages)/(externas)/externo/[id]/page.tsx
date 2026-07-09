@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
-import { BASE_URL } from "@/config/config";
+import { BASE_URL, LOJA_WHATSAPP } from "@/config/config";
 import type { FotoVeiculo, Veiculo } from "@/types/veiculo";
 import {
   cambioLabel,
@@ -30,8 +30,11 @@ import {
   formatBRL,
   formatKm,
   mapVeiculo,
+  opcionalLabel,
   STATUS_LABELS,
 } from "@/app/(pages)/(internas)/veiculo-admin/_components/veiculo.utils";
+import { criarLead, registrarVisualizacao } from "@/services/crmService";
+import type { OrigemLead } from "@/types/crm";
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
@@ -366,9 +369,59 @@ export default function VeiculoDetalhePublico() {
     mensagem: "Olá, tenho interesse neste veículo. Por favor, entre em contato.",
     receberOfertas: false,
   });
+  const [enviandoLead, setEnviandoLead] = useState(false);
+  const [leadFeedback, setLeadFeedback] = useState<{ tipo: "ok" | "erro"; msg: string } | null>(null);
+
+  /** Registra o interesse como lead no CRM da loja. */
+  const enviarLead = async (origem: OrigemLead) => {
+    if (!veiculo) return;
+
+    if (!form.nome.trim()) {
+      setLeadFeedback({ tipo: "erro", msg: "Informe seu nome para entrarmos em contato." });
+      return;
+    }
+    if (!form.email.trim() && !form.telefone.trim()) {
+      setLeadFeedback({ tipo: "erro", msg: "Informe e-mail ou telefone para contato." });
+      return;
+    }
+
+    setEnviandoLead(true);
+    setLeadFeedback(null);
+
+    try {
+      await criarLead({
+        nome: form.nome.trim(),
+        email: form.email.trim() || undefined,
+        telefone: form.telefone.trim() || undefined,
+        mensagem: form.mensagem.trim() || undefined,
+        origem,
+        veiculoId: veiculo.id,
+      });
+
+      if (origem === "WHATSAPP") {
+        const texto = encodeURIComponent(
+          `Olá! Tenho interesse no ${veiculo.marca} ${veiculo.modelo} ${veiculo.anoModelo} ` +
+          `anunciado por ${formatBRL(veiculo.valor)}. Meu nome é ${form.nome.trim()}.`
+        );
+        window.open(`https://wa.me/${LOJA_WHATSAPP}?text=${texto}`, "_blank");
+        setLeadFeedback({ tipo: "ok", msg: "Abrindo o WhatsApp da loja..." });
+      } else if (origem === "VISITA") {
+        setLeadFeedback({ tipo: "ok", msg: "Pedido de visita enviado! A loja entrará em contato para agendar." });
+      } else if (origem === "FINANCIAMENTO") {
+        setLeadFeedback({ tipo: "ok", msg: "Solicitação de financiamento enviada! A loja entrará em contato." });
+      } else {
+        setLeadFeedback({ tipo: "ok", msg: "Mensagem enviada com sucesso! A loja entrará em contato em breve." });
+      }
+    } catch {
+      setLeadFeedback({ tipo: "erro", msg: "Não foi possível enviar. Tente novamente." });
+    } finally {
+      setEnviandoLead(false);
+    }
+  };
 
   useEffect(() => {
     if (!id) return;
+    registrarVisualizacao(Number(id));
     Promise.all([
       fetchPublic<unknown>(`/veiculos/${id}`),
       fetchPublic<FotoVeiculo[]>(`/veiculos/${id}/fotos`).catch(() => [] as FotoVeiculo[]),
@@ -626,21 +679,61 @@ export default function VeiculoDetalhePublico() {
                       <span className="text-xs text-black/60">Quero receber ofertas semelhantes</span>
                     </label>
 
+                    <AnimatePresence>
+                      {leadFeedback && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -6 }}
+                          className={`rounded-xl border px-4 py-3 text-xs font-semibold ${
+                            leadFeedback.tipo === "ok"
+                              ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                              : "bg-red-50 border-red-200 text-red-700"
+                          }`}
+                        >
+                          {leadFeedback.msg}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
                     <motion.button
                       whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                      className="w-full flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-red-500/25 transition-all text-sm"
+                      disabled={enviandoLead}
+                      onClick={() => enviarLead("EMAIL")}
+                      className="w-full flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-red-500/25 transition-all text-sm disabled:opacity-60"
                     >
                       <Send className="w-4 h-4" />
-                      Enviar mensagem
+                      {enviandoLead ? "Enviando..." : "Estou interessado"}
                     </motion.button>
 
                     <motion.button
                       whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                      className="w-full flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-xl transition-all text-sm shadow-md shadow-emerald-500/20"
+                      disabled={enviandoLead}
+                      onClick={() => enviarLead("WHATSAPP")}
+                      className="w-full flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-xl transition-all text-sm shadow-md shadow-emerald-500/20 disabled:opacity-60"
                     >
                       <MessageSquare className="w-4 h-4" />
                       Chamar no WhatsApp
                     </motion.button>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <motion.button
+                        whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                        disabled={enviandoLead}
+                        onClick={() => enviarLead("VISITA")}
+                        className="flex items-center justify-center gap-1.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-800 font-semibold py-3 rounded-xl transition-all text-xs disabled:opacity-60"
+                      >
+                        Agendar visita
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                        disabled={enviandoLead}
+                        onClick={() => enviarLead("FINANCIAMENTO")}
+                        className="flex items-center justify-center gap-1.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-800 font-semibold py-3 rounded-xl transition-all text-xs disabled:opacity-60"
+                      >
+                        Financiamento
+                      </motion.button>
+                    </div>
                   </div>
                 ) : (
                   <div className="p-4 bg-gray-50 rounded-xl border border-black/10 text-center">
@@ -658,17 +751,17 @@ export default function VeiculoDetalhePublico() {
               </div>
             </div>
 
-            {/* ── ITENS DO VEÍCULO (opcional) ── */}
-            {opcionaisAtivos.length > 0 && (
+            {/* ── ITENS OPCIONAIS DO VEÍCULO ── */}
+            {(veiculo.opcionais ?? []).length > 0 && (
               <div className="px-6 py-6 sm:px-8 sm:py-8 border-t border-black/10 bg-blue-50/30">
                 <h2 className="text-[10px] font-extrabold text-black uppercase tracking-[0.15em] mb-5">
                   Itens do Veículo
                 </h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-y-3 gap-x-6">
-                  {opcionaisAtivos.map((o) => (
-                    <div key={`item-${o.key}`} className="flex items-center gap-2">
+                  {(veiculo.opcionais ?? []).map((opcional) => (
+                    <div key={`item-${opcional}`} className="flex items-center gap-2">
                       <CheckCircle2 className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                      <span className="text-sm font-medium text-blue-700">{o.label}</span>
+                      <span className="text-sm font-medium text-blue-700">{opcionalLabel(opcional)}</span>
                     </div>
                   ))}
                 </div>

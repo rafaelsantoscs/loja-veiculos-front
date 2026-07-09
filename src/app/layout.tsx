@@ -9,6 +9,7 @@ import Loader from "@/components/common/Loader";
 import { ThemeProvider } from "next-themes";
 import { ToastContainer } from 'react-toastify'
 import GlobalSync from "@/components/GlobalSync";
+import { GoogleProvider } from "@/components/Providers/GoogleProvider";
 //import { Navbar } from "@/components/InitialScreen/Navbar";
 //import { Footer } from "@/components/InitialScreen/Footer";
 //import { PopupWidget } from "@/components/InitialScreen/PopupWidget";
@@ -127,6 +128,7 @@ export default function RootLayout({
         <meta name="msapplication-tap-highlight" content="no" />
       </head>
       <body >
+        <GoogleProvider>
         <ThemeProvider attribute="class">
         <div className="dark:bg-boxdark-2 dark:text-bodydark ">
         {/* Componente de sincronização automática global */}
@@ -150,6 +152,7 @@ export default function RootLayout({
           {/* <Footer />
           <PopupWidget /> */}
         </ThemeProvider>
+        </GoogleProvider>
       </body>
     </html>
   );

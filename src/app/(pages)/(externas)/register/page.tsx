@@ -13,6 +13,9 @@ import axiosInstance from "@/services/axiosInstance";
 import TermsModal from "@/components/Modal/TermsModal";
 import PrivacyModal from "@/components/Modal/PrivacyModal";
 import { AxiosError } from "axios";
+import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
+import { decodeToken } from "@/utils/decodeToken";
+import { setUserLocalStorage } from "@/store/userLocalStorage";
 
 const SignUpVisa: React.FC = () => {
   const router = useRouter();
@@ -38,6 +41,10 @@ const SignUpVisa: React.FC = () => {
   const [emailValido, setEmailValido] = useState(true);
   const [confirmEmail, setConfirmEmail] = useState('');
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+  const googleEnabled = !!googleClientId && googleClientId !== 'SEU_GOOGLE_CLIENT_ID_AQUI';
 
   // Estados para requisitos de senha
   const [requisitosSenha, setRequisitosSenha] = useState({
@@ -144,7 +151,7 @@ const SignUpVisa: React.FC = () => {
       });
   
       if (response.status === 201) {
-        router.push('/login');
+        router.push('/login?msg=Cadastro realizado com sucesso! Faça login para continuar.');
       } else {
         setErrorMessage('Erro ao cadastrar. Tente novamente.');
       }
@@ -158,6 +165,45 @@ const SignUpVisa: React.FC = () => {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+    if (!credentialResponse.credential) {
+      setErrorMessage('Não foi possível obter as credenciais do Google.');
+      return;
+    }
+    setGoogleLoading(true);
+    setErrorMessage(null);
+    try {
+      const response = await axiosInstance.post('/auth/google', {
+        credential: credentialResponse.credential,
+      });
+      if (response.status === 200 && response.data.token) {
+        const decodedToken = decodeToken(response.data.token);
+        const user = {
+          id: response.data.id || null,
+          nomeCompleto: response.data.nome || '',
+          cpf: response.data.cpf || '',
+          telefone: response.data.telefone || '',
+          email: response.data.email || '',
+          token: response.data.token,
+          roles: decodedToken.roles || [],
+          username: response.data.username || '',
+          imagemUrl: response.data.imagemUrl || '',
+        };
+        setUserLocalStorage(user);
+        const roleValue = user.roles.join(',');
+        document.cookie = `userRoles=${encodeURIComponent(roleValue)}; path=/; SameSite=Strict; max-age=86400`;
+        const isUsuario = user.roles.includes('ROLE_USUARIO') && user.roles.length === 1;
+        router.push(isUsuario ? '/externo' : '/dashboard');
+      }
+    } catch (error) {
+      const err = error as AxiosError;
+      const msg = err.response?.data || 'Erro ao autenticar com Google.';
+      setErrorMessage(typeof msg === 'string' ? msg : 'Erro ao fazer login com Google.');
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -527,6 +573,60 @@ const SignUpVisa: React.FC = () => {
                   )}
                 </button>
               </form>
+
+              {/* Divisor Google — sempre visível */}
+              <div className="mt-6">
+                <div className="relative flex items-center justify-center">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-slate-300 dark:border-slate-600" />
+                  </div>
+                  <span className="relative bg-white/80 dark:bg-slate-800 px-4 text-sm text-slate-500 dark:text-slate-400">
+                    ou cadastre-se com
+                  </span>
+                </div>
+
+                <div className="mt-4 flex justify-center">
+                  {googleLoading ? (
+                    <div className="flex items-center justify-center h-10">
+                      <svg className="animate-spin h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                    </div>
+                  ) : googleEnabled ? (
+                    <GoogleLogin
+                      onSuccess={handleGoogleSuccess}
+                      onError={() => setErrorMessage('Login com Google cancelado ou falhou.')}
+                      text="signup_with"
+                      shape="rectangular"
+                      theme={isDarkMode ? 'filled_black' : 'outline'}
+                      size="large"
+                      width="320"
+                    />
+                  ) : (
+                    <div className="w-full">
+                      <button
+                        type="button"
+                        disabled
+                        className="w-full flex items-center justify-center gap-3 py-3 px-4 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 opacity-60 cursor-not-allowed select-none"
+                      >
+                        <svg width="20" height="20" viewBox="0 0 48 48" fill="none">
+                          <path d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z" fill="#FFC107"/>
+                          <path d="M6.3 14.7l7 5.1C15.1 16 19.2 13 24 13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 16.3 2 9.7 7.4 6.3 14.7z" fill="#FF3D00"/>
+                          <path d="M24 46c5.5 0 10.4-1.9 14.3-5.1l-6.6-5.6C29.6 36.9 26.9 38 24 38c-6.1 0-10.7-3.1-11.7-8.5l-7 5.4C9.1 41.9 16.1 46 24 46z" fill="#4CAF50"/>
+                          <path d="M44.5 20H24v8.5h11.8c-.8 2.6-2.5 4.7-4.7 6.1l6.6 5.6C41.3 36.4 44.5 30.6 44.5 24c0-1.3-.2-2.7-.5-4z" fill="#1976D2"/>
+                        </svg>
+                        <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                          Cadastrar com Google
+                        </span>
+                      </button>
+                      <p className="text-xs text-center text-amber-600 dark:text-amber-400 mt-2">
+                        Configure <code className="bg-slate-100 dark:bg-slate-700 px-1 rounded">NEXT_PUBLIC_GOOGLE_CLIENT_ID</code> no <code className="bg-slate-100 dark:bg-slate-700 px-1 rounded">.env.local</code> para ativar
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
 
               {/* Footer Links */}
               <div className="mt-6 text-center space-y-4">
