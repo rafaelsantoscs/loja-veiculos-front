@@ -12,6 +12,7 @@ import {
   ChevronRight,
   ChevronDown,
   Fuel,
+  LayoutDashboard,
   LogIn,
   Menu,
   Phone,
@@ -58,7 +59,11 @@ const STATUS_BADGE: Record<string, { label: string; cls: string; dot: string }> 
 function Navbar() {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [usuarioLogado, setUsuarioLogado] = useState<{ nomeCompleto?: string; username?: string } | null>(null);
+  const [usuarioLogado, setUsuarioLogado] = useState<{
+    nomeCompleto?: string;
+    username?: string;
+    roles?: string[];
+  } | null>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -83,6 +88,7 @@ function Navbar() {
   };
 
   const primeiroNome = usuarioLogado?.nomeCompleto?.split(" ")[0] ?? usuarioLogado?.username ?? "";
+  const isAdmin = !!(usuarioLogado?.roles?.some((r) => r !== "ROLE_USUARIO"));
 
   return (
     <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-200/50">
@@ -140,6 +146,15 @@ function Navbar() {
                         <p className="text-xs text-gray-500">Logado como</p>
                         <p className="text-sm font-semibold text-gray-900 truncate">{primeiroNome}</p>
                       </div>
+                      {isAdmin && (
+                        <button
+                          onClick={() => { setUserMenuOpen(false); router.push("/dashboard"); }}
+                          className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-blue-600 hover:bg-blue-50 transition-colors font-medium"
+                        >
+                          <LayoutDashboard className="w-4 h-4" />
+                          Ir ao Painel
+                        </button>
+                      )}
                       <button
                         onClick={handleLogout}
                         className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
@@ -165,7 +180,7 @@ function Navbar() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => router.push("/login")}
-                  className="flex items-center gap-2 bg-gray-900 hover:bg-black text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all"
+                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all"
                 >
                   <LogIn className="w-4 h-4" />
                   Entrar
@@ -198,6 +213,14 @@ function Navbar() {
                 {usuarioLogado ? (
                   <>
                     <div className="px-2 py-2 text-blue-700 font-semibold">Olá, {primeiroNome}</div>
+                    {isAdmin && (
+                      <button
+                        onClick={() => { setMenuOpen(false); router.push("/dashboard"); }}
+                        className="flex items-center gap-2 mt-1 border border-blue-300 text-blue-600 font-semibold px-4 py-2 rounded-xl hover:bg-blue-50 transition"
+                      >
+                        <LayoutDashboard className="w-4 h-4" /> Ir ao Painel
+                      </button>
+                    )}
                     <button
                       onClick={handleLogout}
                       className="flex items-center gap-2 mt-1 border border-red-300 text-red-600 font-semibold px-4 py-2 rounded-xl hover:bg-red-50 transition"
@@ -215,8 +238,7 @@ function Navbar() {
                     </button>
                     <button
                       onClick={() => router.push("/login")}
-                      className="flex items-center gap-2 mt-2 bg-gray-900 font-semibold px-4 py-2 rounded-xl hover:bg-black transition"
-                      style={{ color: "#ffffff" }}
+                      className="flex items-center gap-2 mt-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-xl transition"
                     >
                       <LogIn className="w-4 h-4" /> Entrar na conta
                     </button>

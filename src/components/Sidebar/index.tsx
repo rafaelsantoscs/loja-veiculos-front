@@ -25,6 +25,7 @@ import {
   ClipboardCheck,
   Eye,
   FileText,
+  Store,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { clearUserLocalStorage } from "@/store/userLocalStorage";
@@ -567,6 +568,33 @@ export default function SidebarGamificada({ isOpen = true, onToggle }: SidebarPr
 
           {/* Footer */}
           <div className={`p-4 border-t ${theme === 'dark' ? 'border-slate-800/60' : 'border-slate-200/60'}`}>
+            {/* Ver catálogo */}
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => router.push("/externo")}
+              className={`w-full flex items-center gap-3 mb-3 px-3 py-2.5 rounded-xl border transition-all duration-200 font-medium text-sm ${
+                theme === 'dark'
+                  ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'
+                  : 'border-emerald-500/30 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+              } ${collapsed ? 'justify-center' : ''}`}
+              title={collapsed ? "Ver catálogo" : undefined}
+            >
+              <Store className="w-4 h-4 flex-shrink-0" />
+              <AnimatePresence>
+                {!collapsed && (
+                  <motion.span
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: "auto" }}
+                    exit={{ opacity: 0, width: 0 }}
+                    className="overflow-hidden whitespace-nowrap"
+                  >
+                    Ver catálogo
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </motion.button>
+
             <div className="flex items-center justify-between gap-2">
               <ThemeToggle size={collapsed ? "small" : "default"} />
               

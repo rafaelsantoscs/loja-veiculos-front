@@ -6,11 +6,13 @@ import {
   ArrowLeft,
   Camera,
   Car,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   CheckCircle2,
   Heart,
   ImageOff,
+  LayoutDashboard,
   LogIn,
   MapPin,
   Maximize2,
@@ -277,6 +279,32 @@ function GaleriaStrip({ fotos, titulo }: { fotos: FotoVeiculo[]; titulo: string 
 
 function Navbar() {
   const router = useRouter();
+  const [usuarioLogado, setUsuarioLogado] = useState<{ nomeCompleto?: string; username?: string } | null>(null);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = localStorage.getItem("user");
+      if (raw) {
+        const u = JSON.parse(raw);
+        if (u?.token) setUsuarioLogado(u);
+      }
+    } catch {
+      // localStorage indisponível
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    document.cookie = "userRoles=; path=/; max-age=0";
+    setUsuarioLogado(null);
+    setUserMenuOpen(false);
+  };
+
+  const primeiroNome = usuarioLogado?.nomeCompleto?.split(" ")[0] ?? usuarioLogado?.username ?? "";
+  const isAdmin = !!(usuarioLogado?.roles?.some((r) => r !== "ROLE_USUARIO"));
+
   return (
     <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-xl border-b border-gray-200/60">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -300,15 +328,88 @@ function Navbar() {
             </span>
           </a>
 
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => router.push("/login")}
-            className="flex items-center gap-2 bg-gray-900 hover:bg-black text-white text-sm font-semibold px-4 py-2 rounded-xl transition-all"
-          >
-            <LogIn className="w-4 h-4" />
-            <span className="hidden sm:inline">Entrar</span>
-          </motion.button>
+          {usuarioLogado ? (
+            <div className="flex items-center gap-2">
+              {isAdmin && (
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => router.push("/dashboard")}
+                  className="hidden sm:flex items-center gap-2 border border-blue-300 bg-blue-50 hover:bg-blue-100 text-blue-700 text-sm font-semibold px-4 py-2 rounded-xl transition-all"
+                >
+                  <LayoutDashboard className="w-4 h-4" />
+                  Painel
+                </motion.button>
+              )}
+              <div className="relative">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setUserMenuOpen((v) => !v)}
+                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-all"
+                >
+                  <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold">
+                    {primeiroNome.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="hidden sm:inline">Olá, {primeiroNome}</span>
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </motion.button>
+
+                <AnimatePresence>
+                  {userMenuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 py-1 overflow-hidden"
+                    >
+                      <div className="px-4 py-3 border-b border-gray-100">
+                        <p className="text-xs text-gray-500">Logado como</p>
+                        <p className="text-sm font-semibold text-gray-900 truncate">{primeiroNome}</p>
+                      </div>
+                      {isAdmin && (
+                        <button
+                          onClick={() => { setUserMenuOpen(false); router.push("/dashboard"); }}
+                          className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-blue-600 hover:bg-blue-50 transition-colors font-medium"
+                        >
+                          <LayoutDashboard className="w-4 h-4" />
+                          Ir ao Painel
+                        </button>
+                      )}
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                        <LogIn className="w-4 h-4 rotate-180" />
+                        Sair da conta
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => router.push("/register")}
+                className="hidden sm:flex items-center gap-2 border border-gray-300 hover:border-gray-400 text-gray-700 hover:text-black text-sm font-semibold px-4 py-2 rounded-xl transition-all"
+              >
+                Cadastrar
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => router.push("/login")}
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-all"
+              >
+                <LogIn className="w-4 h-4" />
+                <span className="hidden sm:inline">Entrar</span>
+              </motion.button>
+            </div>
+          )}
         </div>
       </div>
     </header>
@@ -354,9 +455,22 @@ function PageSkeleton() {
 
 // ─── PÁGINA PRINCIPAL ─────────────────────────────────────────────────────────
 
+interface UserData {
+  id?: number;
+  nomeCompleto?: string;
+  username?: string;
+  email?: string;
+  telefone?: string;
+  token?: string;
+  roles?: string[];
+}
+
 export default function VeiculoDetalhePublico() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+
+  const [usuarioLogado, setUsuarioLogado] = useState<UserData | null>(null);
+  const [isFavorito, setIsFavorito] = useState(false);
 
   const [veiculo, setVeiculo] = useState<Veiculo | null>(null);
   const [fotos, setFotos] = useState<FotoVeiculo[]>([]);
@@ -419,6 +533,61 @@ export default function VeiculoDetalhePublico() {
     }
   };
 
+  // Carrega usuário logado e preenche o formulário automaticamente
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = localStorage.getItem("user");
+      if (raw) {
+        const u: UserData = JSON.parse(raw);
+        if (u?.token) {
+          setUsuarioLogado(u);
+          setForm((prev) => ({
+            ...prev,
+            nome: u.nomeCompleto || u.username || prev.nome,
+            email: u.email || prev.email,
+            telefone: u.telefone || prev.telefone,
+          }));
+        }
+      }
+    } catch {
+      // localStorage indisponível
+    }
+  }, []);
+
+  // Carrega estado de favorito para este veículo
+  useEffect(() => {
+    if (typeof window === "undefined" || !id) return;
+    try {
+      const raw = localStorage.getItem("user");
+      const userId = raw ? (JSON.parse(raw)?.id ?? JSON.parse(raw)?.username ?? "guest") : "guest";
+      const favs: number[] = JSON.parse(localStorage.getItem(`favoritos_${userId}`) || "[]");
+      setIsFavorito(favs.includes(Number(id)));
+    } catch {
+      // ignore
+    }
+  }, [id]);
+
+  const toggleFavorito = () => {
+    if (!usuarioLogado) {
+      router.push("/login");
+      return;
+    }
+    try {
+      const userId = usuarioLogado.id ?? usuarioLogado.username ?? "guest";
+      const favKey = `favoritos_${userId}`;
+      const favs: number[] = JSON.parse(localStorage.getItem(favKey) || "[]");
+      const veiculoId = Number(id);
+      const novaLista = isFavorito
+        ? favs.filter((f) => f !== veiculoId)
+        : [...favs, veiculoId];
+      localStorage.setItem(favKey, JSON.stringify(novaLista));
+      setIsFavorito(!isFavorito);
+    } catch {
+      // ignore
+    }
+  };
+
   useEffect(() => {
     if (!id) return;
     registrarVisualizacao(Number(id));
@@ -456,7 +625,7 @@ export default function VeiculoDetalhePublico() {
           <motion.button
             whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
             onClick={() => router.push("/externo")}
-            className="flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-xl font-semibold mt-2 hover:bg-black transition"
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold mt-2 transition-all"
           >
             <ArrowLeft className="w-5 h-5" />
             Voltar ao catálogo
@@ -560,8 +729,17 @@ export default function VeiculoDetalhePublico() {
                   <button className="flex items-center gap-1.5 px-3 py-2 bg-white border border-black/15 rounded-xl text-xs font-semibold text-black hover:bg-gray-50 transition-colors">
                     <Share2 className="w-3.5 h-3.5" /> Compartilhar
                   </button>
-                  <button className="flex items-center gap-1.5 px-3 py-2 bg-red-50 border border-red-200 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-100 transition-colors">
-                    <Heart className="w-3.5 h-3.5 fill-red-400" /> Salvar
+                  <button
+                    onClick={toggleFavorito}
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition-colors ${
+                      isFavorito
+                        ? "bg-red-100 border-red-300 text-red-700 hover:bg-red-200"
+                        : "bg-red-50 border-red-200 text-red-600 hover:bg-red-100"
+                    }`}
+                    title={usuarioLogado ? (isFavorito ? "Remover dos favoritos" : "Salvar nos favoritos") : "Faça login para favoritar"}
+                  >
+                    <Heart className={`w-3.5 h-3.5 ${isFavorito ? "fill-red-600 text-red-600" : "fill-red-400"}`} />
+                    {isFavorito ? "Salvo" : "Salvar"}
                   </button>
                 </div>
               </div>
@@ -700,7 +878,7 @@ export default function VeiculoDetalhePublico() {
                       whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                       disabled={enviandoLead}
                       onClick={() => enviarLead("EMAIL")}
-                      className="w-full flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-red-500/25 transition-all text-sm disabled:opacity-60"
+                      className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-500/25 transition-all text-sm disabled:opacity-60"
                     >
                       <Send className="w-4 h-4" />
                       {enviandoLead ? "Enviando..." : "Estou interessado"}
@@ -721,7 +899,7 @@ export default function VeiculoDetalhePublico() {
                         whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                         disabled={enviandoLead}
                         onClick={() => enviarLead("VISITA")}
-                        className="flex items-center justify-center gap-1.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-800 font-semibold py-3 rounded-xl transition-all text-xs disabled:opacity-60"
+                        className="flex items-center justify-center gap-1.5 bg-blue-50 border border-blue-200 hover:bg-blue-100 text-blue-700 font-semibold py-3 rounded-xl transition-all text-xs disabled:opacity-60"
                       >
                         Agendar visita
                       </motion.button>
@@ -729,7 +907,7 @@ export default function VeiculoDetalhePublico() {
                         whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                         disabled={enviandoLead}
                         onClick={() => enviarLead("FINANCIAMENTO")}
-                        className="flex items-center justify-center gap-1.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-800 font-semibold py-3 rounded-xl transition-all text-xs disabled:opacity-60"
+                        className="flex items-center justify-center gap-1.5 bg-blue-50 border border-blue-200 hover:bg-blue-100 text-blue-700 font-semibold py-3 rounded-xl transition-all text-xs disabled:opacity-60"
                       >
                         Financiamento
                       </motion.button>
@@ -742,7 +920,7 @@ export default function VeiculoDetalhePublico() {
                     <motion.button
                       whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                       onClick={() => router.push("/externo")}
-                      className="mt-4 w-full flex items-center justify-center gap-2 bg-gray-900 text-white font-bold py-3 rounded-xl text-sm"
+                      className="mt-4 w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-sm transition-all"
                     >
                       Ver outros veículos
                     </motion.button>
